@@ -15,6 +15,7 @@ import { CrearServicio } from './pages/CrearServicio';
 import { GestionServicios } from './pages/GestionServicios';
 import { PerfilPublico } from './pages/PerfilPublico';
 import { ServicioPublico } from './pages/ServicioPublico';
+import { Planes } from './pages/Planes';
 
 function App() {
   const { session, isLoading } = useAuth();
@@ -29,6 +30,7 @@ function App() {
   const isExplorePage = currentPage === '#explorar';
   const isAboutPage = currentPage === '#nosotros';
   const isContactPage = currentPage === '#contactanos';
+  const isPlansPage = currentPage === '#planes';
   const isSettingsPage = currentPage === '#configuracion';
   const isPrivacyPage = currentPage === '#privacidad';
   const isSecurityPage = currentPage === '#seguridad';
@@ -74,6 +76,8 @@ function App() {
           <Nosotros />
         ) : isContactPage ? (
           <Contactanos />
+        ) : isPlansPage ? (
+          <Planes />
         ) : isSettingsPage ? (
           <ProfileSettingsPage />
         ) : isPrivacyPage ? (

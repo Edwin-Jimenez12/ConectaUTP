@@ -54,6 +54,24 @@ test('el inicio usa el catálogo real y no datos simulados', async () => {
   assert.doesNotMatch(filters, /data\/services/);
 });
 
+test('el documento no fuerza un ancho mínimo incompatible con móviles pequeños', async () => {
+  const styles = await readProjectFile('src/index.css');
+  assert.match(styles, /width: 100%/);
+  assert.doesNotMatch(styles, /min-width: 320px/);
+});
+
+test('la información comercial está disponible en una página pública', async () => {
+  const app = await readProjectFile('src/App.tsx');
+  const menu = await readProjectFile('src/components/Menu.tsx');
+  const plans = await readProjectFile('src/pages/Planes.tsx');
+  const plansData = await readProjectFile('src/pages/planes.data.ts');
+  assert.match(app, /#planes/);
+  assert.match(menu, /Planes/);
+  assert.match(plansData, /Sin comisión/);
+  assert.match(plans, /Promociones/);
+  assert.match(plans, /por servicio seleccionado/);
+});
+
 test('contacto y eliminación de cuenta tienen límites de seguridad', async () => {
   const contactMigration = await readProjectFile('supabase/migrations/20260914000005_create_contact_messages.sql');
   const deleteFunction = await readProjectFile('supabase/functions/delete-account/index.ts');

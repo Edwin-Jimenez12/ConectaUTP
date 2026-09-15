@@ -5,6 +5,7 @@ const footerLinks = [
   { label: 'Explora', href: '#explorar' },
   { label: 'Nosotros', href: '#nosotros' },
   { label: 'Contáctanos', href: '#contactanos' },
+  { label: 'Planes', href: '#planes' },
 ];
 
 export function Footer() {

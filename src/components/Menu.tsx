@@ -6,6 +6,7 @@ const menuItems = [
   { label: 'Inicio', href: '#inicio' },
   { label: 'Explorar', href: '#explorar' },
   { label: 'Nosotros', href: '#nosotros' },
+  { label: 'Planes', href: '#planes' },
   { label: 'Contáctanos', href: '#contactanos' },
 ];
 

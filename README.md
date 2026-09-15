@@ -55,6 +55,7 @@ No se recomienda aplicarlo como fondo de textos extensos.
 - `#explorar`: catálogo de servicios.
 - `#nosotros`: información de ConectaUTP.
 - `#contactanos`: formulario de contacto.
+- `#planes`: información de planes y publicaciones promocionadas.
 - `#configuracion`: configuración del perfil.
 - `#privacidad`, `#seguridad` y `#mi-cuenta`: configuración de cuenta.
 - `#login` y `#registro`: autenticación con Supabase.
