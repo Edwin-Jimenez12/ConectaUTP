@@ -1,0 +1,6 @@
+# Esta función se llama antes de iniciar sesión y valida sus credenciales internamente.
+[functions.sign-in-with-username]
+verify_jwt = false
+
+[functions.delete-account]
+verify_jwt = true

@@ -1,0 +1,45 @@
+export type ServiceStatus = 'draft' | 'published';
+export type ServiceModality = 'online' | 'in_person' | 'both';
+
+export interface DatabaseService {
+  id: string;
+  owner_id: string;
+  category_id: string;
+  title: string;
+  description: string;
+  modality: ServiceModality;
+  price: number | null;
+  status: ServiceStatus;
+  rating: number;
+  review_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PublicService extends Pick<DatabaseService, 'id' | 'owner_id' | 'category_id' | 'modality' | 'price' | 'rating' | 'review_count'> {
+  title: string;
+  created_at: string;
+  category_name: string;
+  provider_name: string;
+  provider_username: string | null;
+  institutional_email_status: 'not_added' | 'pending' | 'verified' | 'rejected';
+}
+
+export interface ServiceCardData {
+  id: string;
+  title: string;
+  provider: string;
+  price: string;
+  rating: string;
+  category: string;
+  locked?: boolean;
+}
+
+export interface ServiceImage {
+  id: string;
+  service_id: string;
+  storage_path: string;
+  alt_text: string;
+  sort_order: number;
+  is_cover: boolean;
+}
