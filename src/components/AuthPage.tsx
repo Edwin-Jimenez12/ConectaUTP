@@ -54,14 +54,14 @@ export function AuthPage({ mode }: AuthPageProps) {
   return (
     <section className="flex min-h-[560px] items-center justify-center bg-linear-to-br from-[#f8f7ff] to-[#e9e4ff] px-4 py-10">
       <form className="w-full max-w-[400px] rounded-xl border border-slate-200 bg-white p-7 shadow-[0_8px_30px_rgba(61,68,218,0.1)]" onSubmit={handleSubmit}>
-        <div className="text-center"><img className="mx-auto h-10 w-auto" src="/LogoCompleto.svg" alt="ConectaUTP" /><h1 className="mt-5 text-[22px] font-semibold">{isRegister ? 'Crea tu cuenta' : 'Bienvenido de nuevo'}</h1><p className="mt-2 text-[10px] text-[#676878]">{isRegister ? 'Únete a la comunidad UTP y comparte tu talento.' : 'Ingresa para continuar en ConectaUTP.'}</p></div>
+        <div className="text-center"><img className="mx-auto h-10 w-auto" src="/LogoCompleto.svg" alt="ConectaUTP" /><h1 className="mt-5 text-3xl font-semibold">{isRegister ? 'Crea tu cuenta' : 'Bienvenido de nuevo'}</h1><p className="mt-2 text-sm text-[#676878]">{isRegister ? 'Únete a la comunidad UTP y comparte tu talento.' : 'Ingresa para continuar en ConectaUTP.'}</p></div>
         {isRegister && <div className="mt-6 grid grid-cols-2 gap-3 max-sm:grid-cols-1"><AuthField label="Nombre" value={firstName} onChange={setFirstName} /><AuthField label="Apellido" value={lastName} onChange={setLastName} /></div>}
         {isRegister && <AuthField className="mt-4" label="Nombre de usuario" value={username} onChange={updateUsername} placeholder="ejemplo_01" />}
         <AuthField className="mt-4" label={isRegister ? 'Correo electrónico' : 'Correo o nombre de usuario'} type={isRegister ? 'email' : 'text'} value={identifier} onChange={setIdentifier} required />
         <PasswordField value={password} showPassword={showPassword} onChange={setPassword} onToggle={() => setShowPassword(!showPassword)} />
-        {message && <p className="mt-4 rounded-md bg-[#f0edff] p-3 text-[10px] text-[#6040b5]">{message}</p>}
+        {message && <p className="mt-4 rounded-md bg-[#f0edff] p-3 text-sm text-[#6040b5]">{message}</p>}
         <Button type="submit" className="mt-5 w-full" disabled={isLoading}>{isLoading ? 'Procesando...' : isRegister ? 'Crear cuenta' : 'Iniciar sesión'}</Button>
-        <p className="mt-5 text-center text-[10px] text-[#676878]">{isRegister ? '¿Ya tienes una cuenta?' : '¿Todavía no tienes una cuenta?'} <a className="font-semibold text-[#7b32ca]" href={isRegister ? '#login' : '#registro'}>{isRegister ? 'Inicia sesión' : 'Regístrate'}</a></p>
+        <p className="mt-5 text-center text-sm text-[#676878]">{isRegister ? '¿Ya tienes una cuenta?' : '¿Todavía no tienes una cuenta?'} <a className="font-semibold text-[#7b32ca]" href={isRegister ? '#login' : '#registro'}>{isRegister ? 'Inicia sesión' : 'Regístrate'}</a></p>
       </form>
     </section>
   );
@@ -79,7 +79,7 @@ interface AuthFieldProps {
 }
 
 function AuthField({ label, value, onChange, className = '', placeholder, type = 'text', minLength, required = true }: AuthFieldProps) {
-  return <label className={`block text-[10px] font-medium ${className}`}>{label}<input className="mt-1 h-9 w-full rounded-md border border-slate-200 px-3 text-[10px] outline-none focus:border-[#7b32ca]" type={type} value={value} placeholder={placeholder} minLength={minLength} required={required} onChange={(event) => onChange(event.target.value)} /></label>;
+  return <label className={`block text-sm font-medium ${className}`}>{label}<input className="mt-1 h-11 w-full rounded-md border border-slate-200 px-3 text-base outline-none focus:border-[#7b32ca]" type={type} value={value} placeholder={placeholder} minLength={minLength} required={required} onChange={(event) => onChange(event.target.value)} /></label>;
 }
 
 interface PasswordFieldProps {
@@ -91,11 +91,11 @@ interface PasswordFieldProps {
 
 function PasswordField({ value, showPassword, onChange, onToggle }: PasswordFieldProps) {
   return (
-    <label className="mt-4 block text-[10px] font-medium">
+    <label className="mt-4 block text-sm font-medium">
       Contraseña
       <span className="relative mt-1 block">
         <input
-          className="h-9 w-full rounded-md border border-slate-200 px-3 pr-10 text-[10px] outline-none focus:border-[#7b32ca]"
+          className="h-11 w-full rounded-md border border-slate-200 px-3 pr-10 text-base outline-none focus:border-[#7b32ca]"
           type={showPassword ? 'text' : 'password'}
           value={value}
           minLength={6}

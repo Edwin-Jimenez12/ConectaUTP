@@ -45,8 +45,8 @@ export function ExploreFilters({
       <div className="max-lg:col-span-1"><label className="mb-2 block font-semibold" htmlFor="price-filter">Precio</label>
       <select className="h-9 w-full rounded border border-[#d9d9df] px-2 text-xs" id="price-filter">
         <option>Cualquier precio</option>
-        <option>Hasta $25</option>
-        <option>Desde $25</option>
+        <option>Hasta B/.25</option>
+        <option>Desde B/.25</option>
       </select></div>
       <div className="max-lg:col-span-1"><label className="mb-2 mt-3 block font-semibold" htmlFor="sort-filter">Ordenar por</label>
       <select className="h-9 w-full rounded border border-[#d9d9df] px-2 text-xs" id="sort-filter">

@@ -67,9 +67,26 @@ test('la información comercial está disponible en una página pública', async
   const plansData = await readProjectFile('src/pages/planes.data.ts');
   assert.match(app, /#planes/);
   assert.match(menu, /Planes/);
-  assert.match(plansData, /Sin comisión/);
+  assert.match(plansData, /Publicaciones de servicios sin costo/);
+  assert.match(plansData, /B\/\.1\.00/);
+  assert.match(plansData, /Promoción de lanzamiento/);
   assert.match(plans, /Promociones/);
   assert.match(plans, /por servicio seleccionado/);
+});
+
+test('el perfil permite editar, guardar y sincronizar el nombre del menú', async () => {
+  const button = await readProjectFile('src/components/Button.tsx');
+  const profilePage = await readProjectFile('src/components/ProfileSettingsPage.tsx');
+  const profileFields = await readProjectFile('src/components/ProfileFormFields.tsx');
+  const authContext = await readProjectFile('src/auth/AuthContext.ts');
+  const menu = await readProjectFile('src/components/Menu.tsx');
+  assert.match(button, /cursor-pointer/);
+  assert.match(profilePage, /updateProfile/);
+  assert.match(profilePage, /setIsEditing\(false\)/);
+  assert.match(profileFields, /disabled\?: boolean/);
+  assert.match(profileFields, /a-z0-9\._/);
+  assert.match(authContext, /profile: Profile \| null/);
+  assert.match(menu, /profile\?\.first_name/);
 });
 
 test('contacto y eliminación de cuenta tienen límites de seguridad', async () => {

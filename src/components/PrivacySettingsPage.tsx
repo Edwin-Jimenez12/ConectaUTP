@@ -22,8 +22,8 @@ function PrivacyRow({ title, description, children }: { title: string; descripti
   return (
     <div className="flex items-center justify-between gap-4 border-b border-slate-100 py-4 last:border-0">
       <div>
-        <h2 className="text-[11px] font-semibold">{title}</h2>
-        <p className="mt-1 max-w-[370px] text-[9px] leading-[1.4] text-[#676878]">{description}</p>
+        <h2 className="text-base font-semibold">{title}</h2>
+        <p className="mt-1 max-w-[520px] text-sm leading-[1.4] text-[#676878]">{description}</p>
       </div>
       {children}
     </div>
@@ -68,8 +68,8 @@ export function PrivacySettingsPage() {
 
   return (
     <SettingsLayout active="Privacidad">
-      <h1 className="text-[20px] font-semibold">Privacidad</h1>
-      <p className="mt-1 text-[9px] text-[#676878]">Controla qué información pueden ver otros usuarios.</p>
+      <h1 className="text-3xl font-semibold">Privacidad</h1>
+      <p className="mt-1 text-sm text-[#676878]">Controla qué información pueden ver otros usuarios.</p>
       <div className="mt-5 rounded-lg border border-slate-200 px-4">
         <PrivacyRow title="Perfil público" description="Permite que otros estudiantes encuentren tu perfil y conozcan tus servicios.">
           <Toggle checked={form.profile_visible} label="Perfil público" onChange={() => setForm({ ...form, profile_visible: !form.profile_visible })} />
@@ -81,15 +81,15 @@ export function PrivacySettingsPage() {
           <Toggle checked={false} label="Correo oculto" onChange={() => undefined} />
         </PrivacyRow>
         <PrivacyRow title="Preferencia de identidad" description="Elige cómo quieres que aparezca tu nombre en las publicaciones.">
-          <select className="h-7 rounded border border-slate-200 px-2 text-[9px]" value={form.identity_preference} onChange={(event) => setForm({ ...form, identity_preference: event.target.value as IdentityPreference })}>
+          <select className="h-11 rounded border border-slate-200 px-3 text-sm" value={form.identity_preference} onChange={(event) => setForm({ ...form, identity_preference: event.target.value as IdentityPreference })}>
             <option value="name">Mostrar mi nombre</option>
             <option value="username">Mostrar mi username</option>
           </select>
         </PrivacyRow>
       </div>
       <div className="mt-4 flex justify-end gap-3">
-        {message && <p className="mr-auto self-center text-[9px] text-[#6040b5]">{message}</p>}
-        <Button className="min-h-8 text-[9px]" onClick={saveChanges} disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar cambios'}</Button>
+        {message && <p className="mr-auto self-center text-sm text-[#6040b5]">{message}</p>}
+        <Button className="text-sm" onClick={saveChanges} disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar cambios'}</Button>
       </div>
     </SettingsLayout>
   );

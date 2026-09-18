@@ -19,7 +19,7 @@ export function Button({
     outline: 'border-[#a96be0] bg-transparent text-[#7b32ca]',
   };
   const classes = [
-    'min-h-10 rounded-[7px] border px-6 text-sm font-semibold',
+    'min-h-10 cursor-pointer rounded-[7px] border px-6 text-sm font-semibold disabled:cursor-not-allowed',
     'transition-transform duration-150 hover:-translate-y-px',
     variantClasses[variant],
     className,

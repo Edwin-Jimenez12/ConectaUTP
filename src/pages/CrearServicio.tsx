@@ -75,7 +75,7 @@ export function CrearServicio() {
   }
 
   return (
-    <section className="mx-auto min-h-[620px] w-[calc(100%-48px)] max-w-[760px] py-10">
+    <section className="mx-auto min-h-[620px] w-[calc(100%-48px)] max-w-7xl py-10">
       <h1 className="text-2xl font-semibold">Publicar mi servicio</h1>
       <p className="mt-1 text-sm text-[#676878]">Comparte una habilidad con la comunidad UTP.</p>
       <form className="mt-6 space-y-4 rounded-xl border border-slate-200 bg-white p-5" onSubmit={handleSubmit}>

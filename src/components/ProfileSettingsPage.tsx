@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useAuth } from '../auth/useAuth';
 import { supabase } from '../lib/supabase';
@@ -23,14 +23,23 @@ function profileToForm(profile: Profile): ProfileFormData {
 }
 
 export function ProfileSettingsPage() {
-  const { session } = useAuth();
+  const { session, updateProfile } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [form, setForm] = useState<ProfileFormData>(emptyForm);
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const verificationStatus = profile?.institutional_email_status ?? 'not_added';
+  const verificationText = verificationStatus === 'verified'
+    ? '◉ Verificación institucional verificada'
+    : verificationStatus === 'rejected'
+      ? '◉ Verificación institucional rechazada'
+      : verificationStatus === 'pending'
+        ? '◉ Verificación institucional pendiente'
+        : '◉ Agrega tu correo institucional';
 
-  async function loadProfile(userId: string) {
+  const loadProfile = useCallback(async (userId: string) => {
     setIsLoading(true);
     const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
     if (error) {
@@ -38,6 +47,7 @@ export function ProfileSettingsPage() {
     } else if (data) {
       const currentProfile = data as Profile;
       setProfile(currentProfile);
+      updateProfile(currentProfile);
       setForm(profileToForm(currentProfile));
     } else {
       const { data: created, error: createError } = await supabase.from('profiles').insert({ id: userId }).select().single();
@@ -46,15 +56,16 @@ export function ProfileSettingsPage() {
       } else {
         const createdProfile = created as Profile;
         setProfile(createdProfile);
+        updateProfile(createdProfile);
         setForm(profileToForm(createdProfile));
       }
     }
     setIsLoading(false);
-  }
+  }, [updateProfile]);
 
   useEffect(() => {
     if (session) void Promise.resolve().then(() => loadProfile(session.user.id));
-  }, [session]);
+  }, [loadProfile, session]);
 
   function updateForm(changes: Partial<ProfileFormData>) {
     setForm((current) => ({ ...current, ...changes }));
@@ -81,8 +92,10 @@ export function ProfileSettingsPage() {
     } else {
       const updatedProfile = data as Profile;
       setProfile(updatedProfile);
+      updateProfile(updatedProfile);
       setForm(profileToForm(updatedProfile));
       setMessage('Cambios guardados correctamente.');
+      setIsEditing(false);
     }
     setIsSaving(false);
   }
@@ -92,22 +105,28 @@ export function ProfileSettingsPage() {
   return (
     <SettingsLayout active="Mi perfil">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-[20px] font-semibold">Mi perfil</h1><p className="mt-1 text-[9px] text-[#676878]">Administra la información que compartes en ConectaUTP.</p></div>
+        <div>
+          <h1 className="text-3xl font-semibold">Mi perfil</h1>
+          <p className="mt-1 text-sm text-[#676878]">Administra la información que compartes en ConectaUTP.</p>
+        </div>
+        <Button variant="outline" className="text-sm" onClick={() => { setIsEditing(true); setMessage(''); }} disabled={isEditing}>
+          Editar
+        </Button>
       </div>
       <div className="mt-4 grid grid-cols-[minmax(0,1fr)_220px] gap-4 max-xl:grid-cols-1">
         <div>
           <div className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
-            <div className="flex items-center gap-3"><span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#eef0f7] text-2xl text-[#24304c]">●</span><div><h2 className="text-[12px] font-semibold">{[form.first_name, form.last_name].filter(Boolean).join(' ') || 'Tu nombre'}</h2><p className="text-[9px] text-[#676878]">@{form.username || 'username'}</p><span className="mt-1 inline-block rounded bg-[#fff0c8] px-2 py-1 text-[8px] text-[#99751d]">◉ Verificación institucional pendiente</span></div></div>
-            <Button variant="outline" className="min-h-7 text-[9px]" disabled>Cambiar foto</Button>
+            <div className="flex items-center gap-3"><span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#eef0f7] text-2xl text-[#24304c]">●</span><div><h2 className="text-base font-semibold">{[form.first_name, form.last_name].filter(Boolean).join(' ') || 'Tu nombre'}</h2><p className="text-sm text-[#676878]">@{form.username || 'username'}</p><span className="mt-1 inline-block rounded bg-[#fff0c8] px-2 py-1 text-xs text-[#99751d]">{verificationText}</span></div></div>
+            <Button variant="outline" className="text-sm" disabled>Cambiar foto</Button>
           </div>
           <form className="mt-3 rounded-lg border border-slate-200 p-3" onSubmit={handleSubmit}>
-            <ProfileFormFields value={form} onChange={updateForm} />
-            <div className="mt-4 flex justify-end gap-2 border-t border-slate-100 pt-3"><Button variant="outline" type="button" className="min-h-8 text-[9px]" onClick={() => profile && setForm(profileToForm(profile))}>Cancelar</Button><Button type="submit" className="min-h-8 text-[9px]" disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar cambios'}</Button></div>
+            <ProfileFormFields value={form} onChange={updateForm} disabled={!isEditing} />
+            <div className="mt-5 flex justify-end gap-3 border-t border-slate-100 pt-4"><Button variant="outline" type="button" className="text-sm" disabled={!isEditing || isSaving} onClick={() => { if (profile) setForm(profileToForm(profile)); setIsEditing(false); setMessage(''); }}>Cancelar</Button><Button type="submit" className="text-sm" disabled={!isEditing || isSaving}>{isSaving ? 'Guardando...' : 'Guardar cambios'}</Button></div>
           </form>
-          {message && <p className="mt-3 rounded-md bg-[#f0edff] p-3 text-[10px] text-[#6040b5]">{message}</p>}
         </div>
-        <PublicProfilePreview value={form} verificationStatus={profile?.institutional_email_status ?? 'not_added'} />
+        <PublicProfilePreview value={form} verificationStatus={verificationStatus} />
       </div>
+      {message && <p className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-[#eaf8ee] px-5 py-3 text-sm font-medium text-[#268044] shadow-lg" role="status" aria-live="polite">{message}</p>}
     </SettingsLayout>
   );
 }

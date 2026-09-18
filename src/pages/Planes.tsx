@@ -18,18 +18,16 @@ export function Planes() {
         </p>
       </section>
 
-      <section className="mx-auto w-[calc(100%-48px)] max-w-6xl py-12">
+      <section className="mx-auto w-[calc(100%-48px)] max-w-7xl py-12">
         <div className="mb-7 text-center">
-          <h2 className="text-2xl font-semibold">
-            Más publicaciones, más oportunidades
-          </h2>
+          <h2 className="text-2xl font-semibold">Publica sin pagar</h2>
           <p className="mt-2 text-sm text-[#676878]">
-            Los primeros 3 servicios son gratuitos. Los planes se renuevan
-            manualmente cada 30 días.
+            ConectaUTP no cobra suscripciones ni comisiones por tus trabajos.
+            Solo pagas si quieres darle mayor visibilidad a una publicación.
           </p>
         </div>
 
-        <div className="grid gap-5 md:grid-cols-3">
+        <div className="mx-auto max-w-md">
           {plans.map((plan) => (
             <PlanCard key={plan.name} plan={plan} />
           ))}
@@ -37,7 +35,7 @@ export function Planes() {
       </section>
 
       <section className="bg-[#f7f5ff] px-6 py-12">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-7xl">
           <div className="max-w-2xl">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7b32ca]">
               Promociones
@@ -53,15 +51,20 @@ export function Planes() {
           </div>
 
           <div className="mt-7 grid gap-4 md:grid-cols-3">
-            {boosts.map((boost, index) => (
+            {boosts.map((boost) => (
               <article
                 className={
-                  index === 1
+                  boost.badge
                     ? 'rounded-xl border border-[#7b32ca] bg-white p-5'
                     : 'rounded-xl border border-slate-200 bg-white p-5'
                 }
                 key={boost.name}
               >
+                {boost.badge && (
+                  <span className="mb-3 w-fit rounded-full bg-[#eeeaff] px-3 py-1 text-xs font-semibold text-[#6842dd]">
+                    {boost.badge}
+                  </span>
+                )}
                 <h3 className="font-semibold">{boost.name}</h3>
                 <p className="mt-2 text-sm text-[#676878]">
                   {boost.duration} de visibilidad promocionada
@@ -78,13 +81,13 @@ export function Planes() {
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-8 py-12">
+      <section className="mx-auto grid w-[calc(100%-48px)] max-w-7xl gap-8 py-12">
         <aside className="rounded-2xl bg-linear-to-br from-[#5420a8] to-[#2671eb] p-7 text-white 
         flex justify-between items-center max-md:flex-col max-md:items-start">
           
           <div className="mt-3 max-w-6xl text-sm leading-6">
             <h2 className="text-3xl font-bold">Crece a tu ritmo</h2>
-            <p className="mt-3 text-md leading-6 text-white/90">
+            <p className="mt-3 text-base leading-6 text-white/90">
             ConectaUTP mantiene el acceso básico gratuito para que cualquier
             estudiante pueda comenzar.
           </p>

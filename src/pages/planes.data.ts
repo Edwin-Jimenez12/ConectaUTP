@@ -1,40 +1,14 @@
 export const plans = [
   {
     name: 'Gratis',
-    price: '$0',
-    period: 'para comenzar',
-    description: 'Comparte tus habilidades sin pagar.',
+    price: 'B/.0',
+    period: 'siempre',
+    description: 'Publica tus servicios y conecta con estudiantes sin pagar suscripciones.',
     features: [
-      'Hasta 3 servicios publicados',
+      'Publicaciones de servicios sin costo',
       'Perfil público',
       'Contacto con clientes',
       'Verificación UTP gratuita',
-    ],
-    featured: false,
-  },
-  {
-    name: 'Emprendedor',
-    price: '$1.99',
-    period: 'cada 30 días',
-    description: 'Más espacio para hacer crecer tu oferta.',
-    features: [
-      'Hasta 6 servicios publicados',
-      'Sin comisión por tus trabajos',
-      'Más opciones para organizar tu perfil',
-      'Acceso a promociones',
-    ],
-    featured: true,
-  },
-  {
-    name: 'Portafolio',
-    price: '$3.49',
-    period: 'cada 30 días',
-    description: 'Presenta una oferta más completa.',
-    features: [
-      'Hasta 10 servicios publicados',
-      'Sin comisión por tus trabajos',
-      'Prioridad para elegir promociones',
-      'Ideal para varias habilidades',
     ],
     featured: false,
   },
@@ -44,16 +18,19 @@ export const boosts = [
   {
     name: 'Impulso básico',
     duration: '3 días',
-    price: '$0.99',
+    price: 'B/.0.99',
+    badge: undefined,
   },
   {
     name: 'Impulso estándar',
     duration: '7 días',
-    price: '$1.49',
+    price: 'B/.1.00',
+    badge: 'Promoción de lanzamiento',
   },
   {
     name: 'Impulso mensual',
     duration: '30 días',
-    price: '$3.99',
+    price: 'B/.3.99',
+    badge: undefined,
   },
 ] as const;

@@ -40,16 +40,16 @@ export function ServicioPublico({ serviceId }: { serviceId: string }) {
     if (!error) event.currentTarget.reset();
   }
 
-  if (!service) return <div className="mx-auto min-h-[620px] max-w-[760px] px-6 py-12 text-sm text-[#676878]">Servicio no disponible.</div>;
+  if (!service) return <div className="mx-auto min-h-[620px] w-[calc(100%-48px)] max-w-7xl px-6 py-12 text-sm text-[#676878]">Servicio no disponible.</div>;
   const isOwner = session?.user.id === service.owner_id;
 
   return (
-    <section className="mx-auto min-h-[620px] w-[calc(100%-48px)] max-w-[760px] py-10">
+    <section className="mx-auto min-h-[620px] w-[calc(100%-48px)] max-w-7xl py-10">
       <a className="text-xs text-[#7b32ca]" href="#explorar">← Volver a explorar</a>
       <article className="mt-5 overflow-hidden rounded-xl border border-slate-200 bg-white">
         <div className="grid gap-4 p-5 sm:grid-cols-2">
           <div className="space-y-2">{session && signedImages.length > 0 ? signedImages.map((url, index) => <img className="h-48 w-full rounded-lg object-cover" key={url} src={url} alt={images[index]?.alt_text ?? service.title} />) : <div className="flex h-48 items-center justify-center rounded-lg bg-linear-to-br from-[#eeeaff] to-[#d9d2eb] text-sm text-[#6040b5]">{session ? 'Este servicio no tiene imágenes.' : 'Regístrate para ver las imágenes.'}</div>}</div>
-          <div><span className="text-xs text-[#7b32ca]">{service.category_name}</span><h1 className="mt-2 text-2xl font-semibold">{service.title}</h1><p className="mt-2 text-sm text-[#676878]">Por {service.provider_name}</p><p className="mt-4 text-sm">{details?.description ?? 'Inicia sesión para consultar la descripción completa del servicio.'}</p><p className="mt-5 font-semibold text-[#7b32ca]">{service.price === null ? 'Precio por definir' : `Desde $${service.price}`}</p></div>
+          <div><span className="text-xs text-[#7b32ca]">{service.category_name}</span><h1 className="mt-2 text-2xl font-semibold">{service.title}</h1><p className="mt-2 text-sm text-[#676878]">Por {service.provider_name}</p><p className="mt-4 text-sm">{details?.description ?? 'Inicia sesión para consultar la descripción completa del servicio.'}</p><p className="mt-5 font-semibold text-[#7b32ca]">{service.price === null ? 'Precio por definir' : `Desde B/.${service.price}`}</p></div>
         </div>
         {session && !isOwner ? <form className="border-t border-slate-100 p-5" onSubmit={sendMessage}><label className="block text-sm font-medium">Contactar al proveedor<textarea className="mt-2 min-h-24 w-full rounded-md border border-slate-200 p-3 text-sm" name="body" required maxLength={2000} placeholder="Escribe tu mensaje" /></label><Button className="mt-3">Enviar mensaje</Button></form> : !session ? <div className="border-t border-slate-100 p-5 text-sm text-[#676878]">Inicia sesión para contactar al proveedor.</div> : null}
       </article>

@@ -39,19 +39,19 @@ export function AccountSettingsPage() {
 
   return (
     <SettingsLayout active="Mi cuenta">
-      <h1 className="text-[20px] font-semibold">Mi cuenta</h1>
-      <p className="mt-1 text-[9px] text-[#676878]">Administra los datos principales de tu cuenta.</p>
+      <h1 className="text-3xl font-semibold">Mi cuenta</h1>
+      <p className="mt-1 text-sm text-[#676878]">Administra los datos principales de tu cuenta.</p>
       <section className="mt-5 rounded-lg border border-slate-200 p-4">
-        <h2 className="text-[12px] font-semibold">Datos de acceso</h2>
-        <label className="mt-4 block text-[9px] text-[#676878]">Correo electrónico<input className="mt-1 h-8 w-full rounded border border-slate-200 bg-[#f8f8fb] px-2 text-[10px]" value={session?.user.email ?? ''} readOnly /></label>
-        <div className="mt-3 flex items-center justify-between rounded bg-[#fff7df] p-3"><div><p className="text-[9px] font-semibold text-[#735d22]">Correo institucional</p><p className="mt-1 text-[8px] text-[#8b752c]">La verificación institucional se gestiona desde esta cuenta.</p></div><span className="rounded bg-[#ffe7a2] px-2 py-1 text-[8px] text-[#735d22]">{statusText[status]}</span></div>
+        <h2 className="text-lg font-semibold">Datos de acceso</h2>
+        <label className="mt-4 block text-sm text-[#676878]">Correo electrónico<input className="mt-1 h-11 w-full rounded border border-slate-200 bg-[#f8f8fb] px-3 text-base" value={session?.user.email ?? ''} readOnly /></label>
+        <div className="mt-3 flex items-center justify-between rounded bg-[#fff7df] p-4"><div><p className="text-sm font-semibold text-[#735d22]">Correo institucional</p><p className="mt-1 text-sm text-[#8b752c]">La verificación institucional se gestiona desde esta cuenta.</p></div><span className="rounded bg-[#ffe7a2] px-2 py-1 text-xs text-[#735d22]">{statusText[status]}</span></div>
       </section>
       <section className="mt-4 rounded-lg border border-red-200 p-4">
-        <h2 className="text-[12px] font-semibold text-[#b42318]">Zona de peligro</h2>
-        <p className="mt-1 max-w-[480px] text-[9px] leading-[1.4] text-[#676878]">Eliminar tu cuenta quitará tu perfil y tus servicios. Esta acción requiere una función segura del servidor.</p>
-        <Button variant="outline" className="mt-4 min-h-8 border-red-300 text-[9px] text-[#b42318]" onClick={deleteAccount} disabled={isDeleting}>{isDeleting ? 'Eliminando...' : 'Eliminar mi cuenta'}</Button>
+        <h2 className="text-lg font-semibold text-[#b42318]">Zona de peligro</h2>
+        <p className="mt-1 max-w-[620px] text-sm leading-[1.4] text-[#676878]">Eliminar tu cuenta quitará tu perfil y tus servicios. Esta acción requiere una función segura del servidor.</p>
+        <Button variant="outline" className="mt-4 border-red-300 text-sm text-[#b42318]" onClick={deleteAccount} disabled={isDeleting}>{isDeleting ? 'Eliminando...' : 'Eliminar mi cuenta'}</Button>
       </section>
-      <div className="mt-4 flex justify-end gap-3">{message && <p className="mr-auto self-center text-[9px] text-[#6040b5]">{message}</p>}<Button variant="outline" className="min-h-8 text-[9px]" onClick={signOut}>Cerrar sesión</Button></div>
+      <div className="mt-4 flex justify-end gap-3">{message && <p className="mr-auto self-center text-sm text-[#6040b5]">{message}</p>}<Button variant="outline" className="text-sm" onClick={signOut}>Cerrar sesión</Button></div>
     </SettingsLayout>
   );
 }

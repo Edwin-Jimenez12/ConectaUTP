@@ -11,7 +11,7 @@ export function PlanCard({ plan }: { plan: (typeof plans)[number] }) {
       className={`relative flex flex-col rounded-2xl border p-6 ${cardClass}`}
     >
       {plan.featured && (
-        <span className="absolute -top-3 left-5 rounded-full bg-[#7b32ca] px-3 py-1 text-[10px] font-semibold text-white">
+        <span className="absolute -top-3 left-5 rounded-full bg-[#7b32ca] px-3 py-1 text-xs font-semibold text-white">
           Más elegido
         </span>
       )}
