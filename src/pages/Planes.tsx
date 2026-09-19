@@ -5,29 +5,27 @@ import { boosts, plans } from './planes.data';
 export function Planes() {
   return (
     <>
-      <section className="bg-linear-to-br from-[#f8f7ff] via-white to-[#e7ddff] px-6 py-16 text-center">
+      <section className="bg-linear-to-br from-[#f8f7ff] via-white to-[#e7ddff] px-6 py-14 text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7b32ca]">
           Planes de ConectaUTP
         </p>
         <h1 className="mx-auto mt-4 max-w-3xl text-4xl font-bold tracking-[-1px] max-md:text-3xl">
-          Publica gratis. Destaca cuando quieras crecer.
+          Publica gratis. Crece cuando lo necesites.
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[#676878]">
-          Empieza sin costo, publica tus servicios y paga únicamente si
-          necesitas mostrar una publicación a más personas.
+          Comienza con 3 servicios y elige un plan cuando necesites más espacio o visibilidad.
         </p>
       </section>
 
       <section className="mx-auto w-[calc(100%-48px)] max-w-7xl py-12">
         <div className="mb-7 text-center">
-          <h2 className="text-2xl font-semibold">Publica sin pagar</h2>
+          <h2 className="text-2xl font-semibold">Elige cómo crecer</h2>
           <p className="mt-2 text-sm text-[#676878]">
-            ConectaUTP no cobra suscripciones ni comisiones por tus trabajos.
-            Solo pagas si quieres darle mayor visibilidad a una publicación.
+            Sin comisiones por tus trabajos. Solo pagas una mensualidad si necesitas más publicaciones y beneficios.
           </p>
         </div>
 
-        <div className="mx-auto max-w-md">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {plans.map((plan) => (
             <PlanCard key={plan.name} plan={plan} />
           ))}

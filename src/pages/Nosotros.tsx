@@ -21,9 +21,8 @@ function AboutHero() {
   return (
     <section className="border-b border-slate-100 bg-linear-to-r from-white via-[#f8f7ff] to-[#e9e4ff]">
       <div className="mx-auto flex min-h-[250px] w-[calc(100%-48px)] max-w-7xl items-center justify-between gap-8 max-lg:min-h-[280px] max-md:flex-col max-md:items-start max-md:py-7">
-        <div className="max-w-[500px] shrink-0 max-md:max-w-full">
-          <span className="rounded-full bg-[#eee8ff] px-3 py-1 text-xs font-semibold text-[#7b32ca]">Sobre ConectaUTP</span>
-          <h1 className="mt-5 text-5xl font-bold leading-[1.12] tracking-[-1px] max-md:text-4xl">Conectamos lo que necesitas<br />con el talento de nuestra comunidad</h1>
+        <div className="max-w-[700px] shrink-0 max-md:max-w-full py-10">
+          <h1 className="mt-5 text-5xl font-bold leading-[1.12] tracking-[-1px] max-md:text-4xl">Conectamos lo que necesitas<br />con el talento de tu <br/> comunidad</h1>
           <p className="mt-4 max-w-[560px] text-lg leading-[1.45] text-[#5c5e70] max-md:text-base">ConectaUTP nace para facilitar que estudiantes encuentren servicios y que puedan compartir sus habilidades con otras personas.</p>
         </div>
         <div className="relative flex h-[180px] w-[390px] max-w-full items-center justify-center overflow-hidden max-md:hidden">

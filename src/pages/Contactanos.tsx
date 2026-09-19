@@ -4,46 +4,52 @@ import { useAuth } from '../auth/useAuth';
 import { Button } from '../components/Button';
 import { supabase } from '../lib/supabase';
 
-const topics = [
-  { icon: '?', title: 'Consultas generales', text: 'Resuelve tus dudas sobre ConectaUTP.' },
-  { icon: '!', title: 'Reportar un problema', text: 'Ayúdanos a mejorar la plataforma.' },
-  { icon: '✦', title: 'Comparte una sugerencia', text: 'Tu opinión nos ayuda a crecer.' },
-];
-const questions = ['¿Cómo puedo publicar un servicio?', '¿Cómo contacto a un proveedor?', '¿Cómo reporto un problema?'];
-
-function TopicCard({ icon, title, text }: (typeof topics)[number]) {
-  return <button className="flex w-full items-center gap-4 rounded-lg border border-slate-200 bg-white p-4 text-left" type="button"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f0eaff] text-xl font-semibold text-[#7b32ca]">{icon}</span><span className="flex-1"><strong className="block text-sm">{title}</strong><small className="mt-1 block text-xs text-[#676878]">{text}</small></span><span className="text-xl text-[#676878]">›</span></button>;
+interface FeedbackForm {
+  firstName: string;
+  lastName: string;
+  email: string;
+  feedback: string;
+  website: string;
 }
 
-function ContactHero() {
-  return <section className="border-b border-slate-100 bg-linear-to-r from-white via-[#f8f7ff] to-[#e9e4ff]"><div className="mx-auto flex min-h-[250px] w-[calc(100%-48px)] max-w-7xl items-center justify-between max-md:py-8"><div><h1 className="text-4xl font-bold tracking-[-1px] max-sm:text-3xl">Estamos aquí para ayudarte</h1><p className="mt-4 max-w-[520px] text-base leading-[1.45] text-[#5c5e70]">¿Tienes alguna pregunta, sugerencia o necesitas<br />reportar un problema? Escríbenos.</p></div><div className="relative hidden h-[130px] w-[390px] items-center justify-center overflow-hidden sm:flex"><div className="absolute h-[110px] w-[110px] rounded-full border border-[#bda3f1]" /><div className="absolute h-20 w-[270px] rotate-[-12deg] rounded-[50%] border border-[#bda3f1]" /><div className="flex h-20 w-20 items-center justify-center rounded-full bg-white p-5 shadow-[0_4px_20px_rgba(61,68,218,0.18)]"><img className="h-10 w-10 object-contain" src="/Logo.svg" alt="" aria-hidden="true" /></div><span className="absolute right-4 rounded border-2 border-[#6842dd] px-5 py-3 text-3xl text-[#6842dd]">✉</span></div></div></section>;
-}
+const emptyForm: FeedbackForm = { firstName: '', lastName: '', email: '', feedback: '', website: '' };
 
-function ContactForm() {
-  const { session } = useAuth();
-  const [message, setMessage] = useState('');
-  const [isSending, setIsSending] = useState(false);
-
-  async function submitForm(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setIsSending(true);
-    setMessage('');
-    const form = new FormData(event.currentTarget);
-    const result = await supabase.from('contact_messages').insert({
-      sender_id: session?.user.id ?? null,
-      full_name: String(form.get('full_name') ?? '').trim(),
-      email: String(form.get('email') ?? '').trim(),
-      topic: String(form.get('topic') ?? '').trim(),
-      message: String(form.get('message') ?? '').trim(),
-    });
-    setMessage(result.error ? 'No se pudo enviar el mensaje. Ejecuta la migración de contacto en Supabase.' : 'Mensaje enviado correctamente.');
-    if (!result.error) event.currentTarget.reset();
-    setIsSending(false);
-  }
-
-  return <form className="rounded-lg border border-slate-200 bg-white p-5" onSubmit={submitForm}><h2 className="text-lg font-semibold">Envíanos un mensaje</h2><label className="mt-5 block text-sm font-medium" htmlFor="contact-name">Nombre completo</label><input className="mt-2 h-10 w-full rounded-md border border-slate-200 px-3 text-sm" id="contact-name" name="full_name" required minLength={2} /><label className="mt-4 block text-sm font-medium" htmlFor="contact-email">Correo electrónico</label><input className="mt-2 h-10 w-full rounded-md border border-slate-200 px-3 text-sm" id="contact-email" name="email" type="email" required /><label className="mt-4 block text-sm font-medium" htmlFor="contact-topic">Motivo de contacto</label><select className="mt-2 h-10 w-full rounded-md border border-slate-200 px-3 text-sm" id="contact-topic" name="topic" defaultValue="" required><option value="" disabled>Selecciona una opción</option><option>Consulta general</option><option>Reportar un problema</option><option>Compartir una sugerencia</option></select><label className="mt-4 block text-sm font-medium" htmlFor="contact-message">Mensaje</label><textarea className="mt-2 min-h-28 w-full resize-none rounded-md border border-slate-200 p-3 text-sm" id="contact-message" name="message" required minLength={10} /><Button className="mt-4 w-full text-sm" type="submit" disabled={isSending}>{isSending ? 'Enviando...' : 'Enviar mensaje'}</Button><p className="mt-3 text-xs text-[#676878]">Usaremos tus datos únicamente para responder a tu mensaje.</p>{message && <p className="mt-3 rounded bg-[#f0edff] p-3 text-xs text-[#6040b5]">{message}</p>}</form>;
+function FeedbackHero() {
+  return <section className="relative overflow-hidden bg-linear-to-br from-[#241550] via-[#5922b6] to-[#2475e9] text-white"><div className="pointer-events-none absolute -right-20 -top-32 h-80 w-80 rounded-full border border-white/20" /><div className="pointer-events-none absolute right-24 top-12 h-44 w-44 rounded-full border border-white/15" /><div className="pointer-events-none absolute -bottom-36 left-1/3 h-80 w-80 rounded-full bg-white/10 blur-3xl" /><div className="relative mx-auto grid min-h-[330px] w-[calc(100%-48px)] max-w-7xl items-center gap-10 py-12 lg:grid-cols-[1.1fr_0.9fr]"><div><p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#d9c8ff]">Construyamos juntos</p><h1 className="mt-4 max-w-2xl text-5xl font-bold leading-[1.05] tracking-[-1.5px] max-md:text-4xl">Tu opinión ayuda a darle forma a ConectaUTP.</h1><p className="mt-5 max-w-xl text-base leading-7 text-white/80">Queremos crear una comunidad útil, cercana y hecha para estudiantes. Cuéntanos qué podemos mejorar.</p></div><div className="relative hidden min-h-48 items-center justify-center lg:flex"><div className="absolute h-48 w-48 rounded-full border border-white/25" /><div className="absolute h-28 w-64 rotate-[-18deg] rounded-[50%] border border-white/20" /><div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-white text-5xl text-[#6b2bd3] shadow-2xl">✦</div><span className="absolute right-8 top-4 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs text-white/80">Ideas que conectan</span><span className="absolute bottom-3 left-5 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs text-white/80">Mejoras reales</span></div></div></section>;
 }
 
 export function Contactanos() {
-  return <><ContactHero /><section className="mx-auto grid w-[calc(100%-48px)] max-w-7xl gap-6 py-8 lg:grid-cols-[1fr_1fr]"><ContactForm /><div className="flex flex-col gap-3">{topics.map((topic) => <TopicCard key={topic.title} {...topic} />)}<div className="rounded-lg border border-slate-200 bg-white p-4"><h2 className="mb-3 text-base font-semibold">Preguntas frecuentes</h2><div className="flex flex-col gap-2">{questions.map((question) => <button className="flex min-h-9 items-center justify-between rounded border border-slate-200 px-3 text-left text-xs" key={question} type="button">{question}<span>⌄</span></button>)}</div></div></div></section><section className="mx-auto mb-4 flex w-[calc(100%-48px)] max-w-7xl items-center justify-between rounded-lg bg-linear-to-r from-[#6422d0] to-[#2671eb] px-8 py-5 text-white max-md:flex-wrap max-md:gap-4 max-md:px-5"><div><h2 className="text-xl font-semibold">Tu opinión también conecta</h2><p className="mt-1 text-sm">Construyamos juntos una mejor comunidad UTP.</p></div><Button variant="secondary" className="min-h-10 border-white bg-transparent text-sm text-white">Crear una cuenta</Button></section></>;
+  const { profile, session } = useAuth();
+  const [form, setForm] = useState<FeedbackForm>({
+    ...emptyForm,
+    firstName: profile?.first_name ?? '',
+    lastName: profile?.last_name ?? '',
+    email: session?.user.email ?? '',
+  });
+  const [isSending, setIsSending] = useState(false);
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState<'success' | 'error'>('success');
+
+  function updateForm(changes: Partial<FeedbackForm>) {
+    setForm((current) => ({ ...current, ...changes }));
+  }
+
+  async function submitFeedback(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsSending(true);
+    setMessage('');
+    const { data, error } = await supabase.functions.invoke('send-feedback', { body: form });
+    const functionError = data?.error as string | undefined;
+    if (error || functionError) {
+      setMessage(functionError ?? 'No se pudo enviar tu opinión. Inténtalo nuevamente.');
+      setMessageType('error');
+    } else {
+      setMessage('Tu opinión fue enviada correctamente a ConectaUTP.');
+      setMessageType('success');
+      setForm((current) => ({ ...emptyForm, firstName: current.firstName, lastName: current.lastName, email: current.email }));
+    }
+    setIsSending(false);
+  }
+
+  return <><FeedbackHero /><section className="mx-auto grid w-[calc(100%-48px)] max-w-7xl gap-8 py-12 lg:grid-cols-[0.85fr_1.15fr]"><div className="pt-3"><p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#7b32ca]">Tu opinión es importante para nosotros</p><h2 className="mt-4 text-3xl font-bold leading-tight">Mejoremos ConectaUTP contigo.</h2><p className="mt-5 text-base leading-7 text-[#676878]">Envíanos tus ideas, observaciones o sugerencias. Tu mensaje llegará directamente al equipo de ConectaUTP por correo electrónico.</p><div className="mt-8 space-y-4"><div className="flex gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#eeeaff] text-[#7b32ca]">1</span><p className="text-sm leading-6"><strong className="block">Cuéntanos qué piensas</strong><span className="text-[#676878]">No necesitas encontrar las palabras perfectas.</span></p></div><div className="flex gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#eeeaff] text-[#7b32ca]">2</span><p className="text-sm leading-6"><strong className="block">Lo revisamos</strong><span className="text-[#676878]">Cada opinión nos ayuda a priorizar mejoras.</span></p></div><div className="flex gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#eeeaff] text-[#7b32ca]">3</span><p className="text-sm leading-6"><strong className="block">Seguimos conectando</strong><span className="text-[#676878]">Construimos una mejor comunidad UTP juntos.</span></p></div></div></div><form className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm max-sm:p-4" onSubmit={submitFeedback}><div className="mb-6"><h2 className="text-xl font-semibold">Comparte tu opinión</h2><p className="mt-1 text-sm text-[#676878]">El mensaje será enviado a conectautp507@gmail.com.</p></div><div className="grid gap-4 sm:grid-cols-2"><label className="text-sm font-medium">Nombre<input className="mt-2 h-11 w-full rounded-lg border border-slate-200 px-3 text-sm" required minLength={2} maxLength={60} value={form.firstName} onChange={(event) => updateForm({ firstName: event.target.value })} /></label><label className="text-sm font-medium">Apellido<input className="mt-2 h-11 w-full rounded-lg border border-slate-200 px-3 text-sm" required minLength={2} maxLength={60} value={form.lastName} onChange={(event) => updateForm({ lastName: event.target.value })} /></label></div><label className="mt-4 block text-sm font-medium">Correo electrónico<input className="mt-2 h-11 w-full rounded-lg border border-slate-200 px-3 text-sm" required type="email" value={form.email} onChange={(event) => updateForm({ email: event.target.value })} /></label><label className="mt-4 block text-sm font-medium">¿Qué te gustaría mejorar?<textarea className="mt-2 min-h-40 w-full resize-y rounded-lg border border-slate-200 p-3 text-sm" required minLength={10} maxLength={3000} value={form.feedback} onChange={(event) => updateForm({ feedback: event.target.value })} placeholder="Escribe aquí tus ideas, sugerencias u observaciones..." /></label><input className="hidden" tabIndex={-1} autoComplete="off" value={form.website} onChange={(event) => updateForm({ website: event.target.value })} aria-hidden="true" /><Button className="mt-5 w-full" type="submit" disabled={isSending}>{isSending ? 'Enviando opinión...' : 'Enviar mi opinión'}</Button>{message && <p className={`mt-4 rounded-lg p-3 text-sm ${messageType === 'success' ? 'bg-[#eaf8ee] text-[#268044]' : 'bg-[#fff0f0] text-[#b42318]'}`} role="status" aria-live="polite">{message}</p>}<p className="mt-4 text-center text-xs text-[#676878]">No guardamos tu opinión en la plataforma; solo la enviamos al equipo de ConectaUTP.</p></form></section></>;
 }

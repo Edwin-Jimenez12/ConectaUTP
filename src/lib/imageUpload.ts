@@ -38,7 +38,7 @@ export async function compressImage(file: File) {
   return new File([blob], `${baseName}.webp`, { type: 'image/webp' });
 }
 
-export async function uploadServiceImages(serviceId: string, files: File[], altText: string) {
+export async function uploadServiceImages(serviceId: string, files: File[], altTexts: string[]) {
   if (files.length > MAX_FILES) {
     throw new Error('Puedes subir máximo 5 imágenes por servicio.');
   }
@@ -57,7 +57,7 @@ export async function uploadServiceImages(serviceId: string, files: File[], altT
       const row = await supabase.from('service_images').insert({
         service_id: serviceId,
         storage_path: path,
-        alt_text: altText || `Imagen del servicio ${index + 1}`,
+        alt_text: altTexts[index]?.trim() || `Imagen del servicio ${index + 1}`,
         sort_order: index,
         is_cover: index === 0,
       });

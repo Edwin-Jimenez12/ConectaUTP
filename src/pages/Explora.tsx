@@ -3,7 +3,7 @@ import { useAuth } from '../auth/useAuth';
 import { Button } from '../components/Button';
 import { ExploreFilters } from '../components/ExploreFilters';
 import { ServiceCard } from '../components/ServiceCard';
-import { listCategories, listPublicServices } from '../lib/services';
+import { getServiceCoverImages, listCategories, listPublicServices } from '../lib/services';
 import type { PublicService, ServiceCardData } from '../types/service';
 
 function toCard(service: PublicService, canView: boolean): ServiceCardData {
@@ -14,6 +14,9 @@ function toCard(service: PublicService, canView: boolean): ServiceCardData {
     price: service.price === null ? 'Precio por definir' : `Desde B/.${service.price}`,
     rating: service.rating.toFixed(1),
     category: service.category_name,
+    imageUrl: service.cover_image_url,
+    imageAlt: service.cover_image_alt,
+    providerImageUrl: service.provider_avatar_url,
     locked: !canView,
   };
 }
@@ -29,12 +32,26 @@ export function Explora() {
   const servicesPerPage = 9;
 
   useEffect(() => {
-    void Promise.all([listPublicServices(), listCategories()]).then(([serviceResult, categoryResult]) => {
+    let active = true;
+    void Promise.all([listPublicServices(), listCategories()]).then(async ([serviceResult, categoryResult]) => {
+      if (!active) return;
       if (serviceResult.error || categoryResult.error) setMessage('No se pudo cargar el catálogo. Ejecuta la migración de servicios en Supabase.');
-      setServices(serviceResult.data ?? []);
+      const nextServices = serviceResult.data ?? [];
+      if (session && nextServices.length > 0 && !serviceResult.error) {
+        const coverResult = await getServiceCoverImages(nextServices.map((service) => service.id));
+        if (!active) return;
+        setServices(nextServices.map((service) => ({
+          ...service,
+          cover_image_url: coverResult.data.get(service.id)?.url,
+          cover_image_alt: coverResult.data.get(service.id)?.altText,
+        })));
+      } else {
+        setServices(nextServices);
+      }
       setCategoryNames((categoryResult.data ?? []).map((item) => item.name));
     });
-  }, []);
+    return () => { active = false; };
+  }, [session]);
 
   const filteredServices = useMemo(() => services.filter((service) => service.title.toLowerCase().includes(query.toLowerCase()) && (!category || service.category_name === category)), [category, query, services]);
   const totalPages = Math.max(1, Math.ceil(filteredServices.length / servicesPerPage));

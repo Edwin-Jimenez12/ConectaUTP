@@ -63,6 +63,34 @@ export function getServiceImages(serviceId: string) {
     .order('sort_order') as unknown as Promise<PostgrestSingleResponse<ServiceImage[]>>;
 }
 
+export async function getServiceCoverImages(serviceIds: string[]) {
+  const covers = new Map<string, { url: string; altText: string }>();
+  if (serviceIds.length === 0) return { data: covers, error: null };
+
+  const result = await supabase
+    .from('service_images')
+    .select('*')
+    .in('service_id', serviceIds)
+    .order('sort_order') as unknown as PostgrestSingleResponse<ServiceImage[]>;
+
+  if (result.error) return { data: covers, error: result.error };
+
+  const firstImageByService = new Map<string, ServiceImage>();
+  for (const image of result.data ?? []) {
+    const current = firstImageByService.get(image.service_id);
+    if (!current || image.is_cover) firstImageByService.set(image.service_id, image);
+  }
+
+  await Promise.all([...firstImageByService.values()].map(async (image) => {
+    const { data, error } = await supabase.storage
+      .from('service-images')
+      .createSignedUrl(image.storage_path, 600);
+    if (!error && data?.signedUrl) covers.set(image.service_id, { url: data.signedUrl, altText: image.alt_text });
+  }));
+
+  return { data: covers, error: null };
+}
+
 export function createService(input: NewServiceInput) {
   return supabase
     .from('services')

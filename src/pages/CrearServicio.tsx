@@ -9,7 +9,7 @@ import type { ServiceModality, ServiceStatus } from '../types/service';
 
 const initialForm = {
   title: '', description: '', category_id: '', modality: 'both' as ServiceModality,
-  price: '', status: 'draft' as ServiceStatus, altText: '',
+  price: '', status: 'draft' as ServiceStatus, altTexts: [] as string[],
 };
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
@@ -23,8 +23,13 @@ export function CrearServicio() {
   const [form, setForm] = useState(initialForm);
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [files, setFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [message, setMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => () => {
+    previewUrls.forEach((url) => URL.revokeObjectURL(url));
+  }, [previewUrls]);
 
   useEffect(() => {
     void listCategories().then(({ data, error }) => {
@@ -38,7 +43,18 @@ export function CrearServicio() {
   }
 
   function selectFiles(selected: FileList | null) {
-    setFiles(selected ? Array.from(selected).slice(0, 5) : []);
+    const selectedFiles = selected ? Array.from(selected) : [];
+    const nextFiles = [...files, ...selectedFiles].slice(0, 5);
+    const addedFiles = nextFiles.slice(files.length);
+    setFiles(nextFiles);
+    setPreviewUrls([...previewUrls, ...addedFiles.map((file) => URL.createObjectURL(file))].slice(0, 5));
+    updateForm({ altTexts: [...form.altTexts, ...addedFiles.map(() => '')].slice(0, 5) });
+  }
+
+  function removeFile(index: number) {
+    setFiles(files.filter((_, fileIndex) => fileIndex !== index));
+    setPreviewUrls(previewUrls.filter((_, previewIndex) => previewIndex !== index));
+    updateForm({ altTexts: form.altTexts.filter((_, altIndex) => altIndex !== index) });
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -63,10 +79,11 @@ export function CrearServicio() {
       return;
     }
     try {
-      if (files.length) await uploadServiceImages(result.data.id, files, form.altText.trim());
+      if (files.length) await uploadServiceImages(result.data.id, files, form.altTexts);
       setMessage(status === 'published' ? 'Servicio publicado correctamente.' : 'Borrador guardado correctamente.');
       setForm(initialForm);
       setFiles([]);
+      setPreviewUrls([]);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Falló la subida de imágenes.');
     } finally {
@@ -86,8 +103,8 @@ export function CrearServicio() {
           <Field label="Modalidad"><select className={inputClass} value={form.modality} onChange={(event) => updateForm({ modality: event.target.value as ServiceModality })}><option value="online">En línea</option><option value="in_person">Presencial</option><option value="both">Ambas</option></select></Field>
           <Field label="Precio desde"><input className={inputClass} type="number" min="0" step="0.01" value={form.price} onChange={(event) => updateForm({ price: event.target.value })} /></Field>
         </div>
-        <Field label="Imágenes (máximo 5, 5 MB cada una)"><input className="mt-1 block w-full rounded-md border border-slate-200 p-2 text-sm" type="file" accept="image/*" multiple onChange={(event) => selectFiles(event.target.files)} /></Field>
-        {files.length > 0 && <Field label="Texto alternativo"><input className={inputClass} placeholder="Describe las imágenes" value={form.altText} onChange={(event) => updateForm({ altText: event.target.value })} /></Field>}
+        <Field label="Imágenes (máximo 5, 5 MB cada una)"><div className="mt-1 flex flex-wrap items-center gap-3"><label className="inline-flex min-h-10 cursor-pointer items-center rounded-md border border-slate-200 px-4 text-sm text-[#5420a8] hover:bg-[#f4f1ff]">{files.length ? '+ Agregar otra imagen' : 'Elegir imágenes'}<input className="sr-only" type="file" accept="image/*" multiple onChange={(event) => { selectFiles(event.target.files); event.target.value = ''; }} /></label><span className="text-xs text-[#676878]">{files.length}/5 seleccionadas</span></div></Field>
+        {files.length > 0 && <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{files.map((file, index) => <figure className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50" key={`${file.name}-${file.lastModified}-${index}`}><img className="h-32 w-full object-cover" src={previewUrls[index]} alt={`Vista previa ${index + 1}`} /><figcaption className="truncate px-3 pt-2 text-xs text-slate-600">{file.name}</figcaption><div className="p-3"><label className="block text-xs font-medium">Texto alternativo<input className={inputClass} required minLength={3} maxLength={150} placeholder="Describe esta imagen" value={form.altTexts[index] ?? ''} onChange={(event) => updateForm({ altTexts: form.altTexts.map((altText, altIndex) => altIndex === index ? event.target.value : altText) })} /></label><button className="mt-2 cursor-pointer text-xs font-semibold text-red-600 hover:underline" type="button" onClick={() => removeFile(index)}>Quitar imagen</button></div></figure>)}</div>}
         <div className="flex flex-wrap gap-3 border-t border-slate-100 pt-4"><Button variant="outline" type="submit" value="draft" disabled={isSaving}>Guardar borrador</Button><Button type="submit" value="published" disabled={isSaving}>{isSaving ? 'Guardando...' : 'Publicar servicio'}</Button></div>
         {message && <p className="rounded-md bg-[#f0edff] p-3 text-xs text-[#6040b5]">{message}</p>}
       </form>

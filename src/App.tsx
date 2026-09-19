@@ -16,10 +16,12 @@ import { GestionServicios } from './pages/GestionServicios';
 import { PerfilPublico } from './pages/PerfilPublico';
 import { ServicioPublico } from './pages/ServicioPublico';
 import { Planes } from './pages/Planes';
+import { Chats } from './pages/Chats';
 
 function App() {
   const { session, isLoading } = useAuth();
   const [currentPage, setCurrentPage] = useState(window.location.hash || '#inicio');
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => window.localStorage.getItem('conecta-theme') === 'dark' ? 'dark' : 'light');
 
   useEffect(() => {
     const handleHashChange = () => setCurrentPage(window.location.hash || '#inicio');
@@ -39,9 +41,11 @@ function App() {
   const isRegisterPage = currentPage === '#registro';
   const isCreateServicePage = currentPage === '#publicar';
   const isManageServicesPage = currentPage === '#mis-servicios';
+  const isChatsPage = currentPage === '#chats' || currentPage.startsWith('#chats/');
+  const chatServiceId = currentPage.startsWith('#chats/') ? currentPage.slice('#chats/'.length) : '';
   const serviceId = currentPage.startsWith('#servicio/') ? currentPage.slice('#servicio/'.length) : '';
   const profileId = currentPage.startsWith('#perfil/') ? currentPage.slice('#perfil/'.length) : '';
-  const isProtectedPage = isSettingsPage || isPrivacyPage || isSecurityPage || isAccountPage || isCreateServicePage || isManageServicesPage;
+  const isProtectedPage = isSettingsPage || isPrivacyPage || isSecurityPage || isAccountPage || isCreateServicePage || isManageServicesPage || isChatsPage;
 
   useEffect(() => {
     if (!isLoading && isProtectedPage && !session) {
@@ -49,19 +53,25 @@ function App() {
     }
   }, [isLoading, isProtectedPage, session]);
 
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.body.dataset.theme = theme;
+    window.localStorage.setItem('conecta-theme', theme);
+  }, [theme]);
+
 
   return (
-    <div className="min-h-screen overflow-hidden bg-[#fdfdfd] font-inter text-[#141414]">
-      <Menu />
+    <div data-theme={theme} className="min-h-screen overflow-hidden bg-[#fdfdfd] font-inter text-[#141414]">
+      <Menu theme={theme} onToggleTheme={() => setTheme((currentTheme) => currentTheme === 'light' ? 'dark' : 'light')} />
       <main className="pt-[76px]">
         {isLoginPage ? (
-          <AuthPage mode="login" />
+          <AuthPage mode="login" theme={theme} />
         ) : isRegisterPage ? (
-          <AuthPage mode="register" />
+          <AuthPage mode="register" theme={theme} />
         ) : isLoading ? (
           <div className="flex min-h-[560px] items-center justify-center text-sm text-[#676878]">Cargando sesión...</div>
         ) : isProtectedPage && !session ? (
-          <AuthPage mode="login" />
+          <AuthPage mode="login" theme={theme} />
         ) : serviceId ? (
           <ServicioPublico serviceId={serviceId} />
         ) : profileId ? (
@@ -70,6 +80,8 @@ function App() {
           <CrearServicio />
         ) : isManageServicesPage ? (
           <GestionServicios />
+        ) : isChatsPage ? (
+          <Chats initialServiceId={chatServiceId} />
         ) : isExplorePage ? (
           <Explora />
         ) : isAboutPage ? (

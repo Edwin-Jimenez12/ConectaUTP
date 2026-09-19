@@ -3,9 +3,10 @@ import type { InstitutionalEmailStatus, ProfileFormData } from '../types/profile
 interface PublicProfilePreviewProps {
   value: ProfileFormData;
   verificationStatus: InstitutionalEmailStatus;
+  avatarUrl?: string | null;
 }
 
-export function PublicProfilePreview({ value, verificationStatus }: PublicProfilePreviewProps) {
+export function PublicProfilePreview({ value, verificationStatus, avatarUrl }: PublicProfilePreviewProps) {
   const fullName = [value.first_name, value.last_name].filter(Boolean).join(' ') || 'Tu nombre';
   const primaryName = value.identity_preference === 'username' && value.username ? `@${value.username}` : fullName;
   const secondaryName = value.username ? `@${value.username}` : 'Agrega un username';
@@ -17,7 +18,7 @@ export function PublicProfilePreview({ value, verificationStatus }: PublicProfil
       <div className="mt-3 overflow-hidden rounded-md border border-slate-100">
         <div className="h-16 bg-linear-to-r from-[#eee8ff] via-[#f8f7ff] to-[#ddd4fb]" />
         <div className="px-3 pb-3">
-          <div className="-mt-7 flex h-14 w-14 items-center justify-center rounded-full border-4 border-white bg-[#eef0f7] text-2xl text-[#24304c]">●</div>
+          <div className="-mt-7 flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[#eef0f7] text-2xl text-[#24304c]">{avatarUrl ? <img className="h-full w-full object-cover" src={avatarUrl} alt="Foto de perfil" /> : '●'}</div>
           <h3 className="mt-2 text-base font-semibold">{primaryName}</h3>
           <p className="text-sm text-[#676878]">{secondaryName}</p>
           <span className="mt-2 inline-block rounded bg-[#fff0c8] px-2 py-1 text-xs text-[#99751d]">◉ {statusText}</span>

@@ -4,3 +4,6 @@ verify_jwt = false
 
 [functions.delete-account]
 verify_jwt = true
+
+[functions.send-feedback]
+verify_jwt = false

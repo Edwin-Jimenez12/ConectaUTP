@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../auth/useAuth';
 import { Button } from '../components/Button';
 import { ServiceCard } from '../components/ServiceCard';
-import { listPublicServices } from '../lib/services';
+import { getServiceCoverImages, listPublicServices } from '../lib/services';
 import type { PublicService, ServiceCardData } from '../types/service';
 
 function toCard(service: PublicService, canView: boolean): ServiceCardData {
@@ -13,6 +13,9 @@ function toCard(service: PublicService, canView: boolean): ServiceCardData {
     price: service.price === null ? 'Precio por definir' : `Desde B/.${service.price}`,
     rating: service.rating.toFixed(1),
     category: service.category_name,
+    imageUrl: service.cover_image_url,
+    imageAlt: service.cover_image_alt,
+    providerImageUrl: service.provider_avatar_url,
     locked: !canView,
   };
 }
@@ -77,7 +80,7 @@ function HeroVisual() {
 
           <div className="hero-network-core hero-motion absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center [animation-delay:-2s]">
             <div className="flex h-28 w-28 items-center justify-center rounded-full border-[10px] border-white bg-[#7b32ca] text-6xl font-bold text-white shadow-[0_18px_45px_rgba(84,32,168,0.25)] ring-8 ring-[#cfc4f6]/50 max-md:h-20 max-md:w-20 max-md:border-[7px] max-md:text-4xl">C</div>
-            <div className="mt-3 rounded-full border border-white/80 bg-white/75 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#5420a8] shadow-sm backdrop-blur-sm">ConectaUTP</div>
+            <div className="hero-brand-label mt-3 rounded-full border border-white/80 bg-white/75 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#5420a8] shadow-sm backdrop-blur-sm">ConectaUTP</div>
           </div>
         </div>
       </div>
@@ -94,7 +97,7 @@ function HeroSection() {
       <div className="relative z-10 mx-auto flex min-h-[380px] w-[calc(100%-48px)] max-w-7xl items-center max-lg:min-h-[400px] max-md:min-h-[560px]">
         <div className="relative max-w-[600px] max-md:mt-5">
           <h1 className="m-0 text-5xl font-bold max-md:text-4xl">Lo que necesitas,<br />dentro de tu <span className="text-[#7b32ca]">comunidad</span></h1>
-          <p className="my-3 mb-4 max-w-[480px] text-base leading-[1.45] text-[#000000]/75 max-md:text-sm">Encuentra u ofrece servicios dentro de la comunidad UTP y conecta con estudiantes que pueden ayudarte a lograr más.</p>
+          <p className="hero-subtitle my-3 mb-4 max-w-[480px] text-base leading-[1.45] text-[#000000]/75 max-md:text-sm">Encuentra u ofrece servicios dentro de la comunidad UTP y conecta con estudiantes que pueden ayudarte a lograr más.</p>
           <div className="flex max-w-[475px] max-sm:flex-col max-sm:gap-2">
             <input className="min-w-0 w-full rounded-l-[6px] border border-[#000000]/60 px-4 py-3 text-base max-sm:rounded-md" id="service-search" type="search" placeholder="¿Qué estás buscando?" />
             <Button className="shrink-0 cursor-pointer whitespace-nowrap rounded-l-none rounded-r-[6px] px-6 text-sm max-sm:rounded-md" onClick={() => { window.location.hash = '#explorar'; }}>Buscar servicio</Button>
@@ -175,10 +178,31 @@ export function Inicio() {
   const [services, setServices] = useState<PublicService[]>([]);
   const [message, setMessage] = useState('');
   useEffect(() => {
-    void listPublicServices().then((serviceResult) => {
-      if (serviceResult.error) setMessage('No se pudo cargar el catálogo. Verifica las migraciones de servicios en Supabase.');
-      setServices(serviceResult.data ?? []);
-    });
-  }, []);
+    let active = true;
+    void (async () => {
+      const serviceResult = await listPublicServices();
+      if (!active) return;
+      if (serviceResult.error) {
+        setMessage('No se pudo cargar el catálogo. Verifica las migraciones de servicios en Supabase.');
+        setServices([]);
+        return;
+      }
+
+      const nextServices = serviceResult.data ?? [];
+      if (!session || nextServices.length === 0) {
+        setServices(nextServices);
+        return;
+      }
+
+      const coverResult = await getServiceCoverImages(nextServices.map((service) => service.id));
+      if (!active) return;
+      setServices(nextServices.map((service) => ({
+        ...service,
+        cover_image_url: coverResult.data.get(service.id)?.url,
+        cover_image_alt: coverResult.data.get(service.id)?.altText,
+      })));
+    })();
+    return () => { active = false; };
+  }, [session]);
   return <><HeroSection /><ServicesSection services={services} canView={Boolean(session)} message={message} /><ShareBanner /></>;
 }

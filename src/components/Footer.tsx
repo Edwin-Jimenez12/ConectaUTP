@@ -4,7 +4,7 @@ const footerLinks = [
   { label: 'Inicio', href: '#inicio' },
   { label: 'Explora', href: '#explorar' },
   { label: 'Nosotros', href: '#nosotros' },
-  { label: 'Contáctanos', href: '#contactanos' },
+  { label: 'Tu opinión', href: '#contactanos' },
   { label: 'Destacadas', href: '#planes' },
 ];
 

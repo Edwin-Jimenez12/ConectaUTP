@@ -6,9 +6,10 @@ import { Button } from './Button';
 
 interface AuthPageProps {
   mode: 'login' | 'register';
+  theme: 'light' | 'dark';
 }
 
-export function AuthPage({ mode }: AuthPageProps) {
+export function AuthPage({ mode, theme }: AuthPageProps) {
   const isRegister = mode === 'register';
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -54,7 +55,7 @@ export function AuthPage({ mode }: AuthPageProps) {
   return (
     <section className="flex min-h-[560px] items-center justify-center bg-linear-to-br from-[#f8f7ff] to-[#e9e4ff] px-4 py-10">
       <form className="w-full max-w-[400px] rounded-xl border border-slate-200 bg-white p-7 shadow-[0_8px_30px_rgba(61,68,218,0.1)]" onSubmit={handleSubmit}>
-        <div className="text-center"><img className="mx-auto h-10 w-auto" src="/LogoCompleto.svg" alt="ConectaUTP" /><h1 className="mt-5 text-3xl font-semibold">{isRegister ? 'Crea tu cuenta' : 'Bienvenido de nuevo'}</h1><p className="mt-2 text-sm text-[#676878]">{isRegister ? 'Únete a la comunidad UTP y comparte tu talento.' : 'Ingresa para continuar en ConectaUTP.'}</p></div>
+        <div className="text-center"><img className="mx-auto h-10 w-auto" src={theme === 'dark' ? '/LogoBlanco.svg' : '/LogoCompleto.svg'} alt="ConectaUTP" /><h1 className="mt-5 text-3xl font-semibold">{isRegister ? 'Crea tu cuenta' : 'Bienvenido de nuevo'}</h1><p className="mt-2 text-sm text-[#676878]">{isRegister ? 'Únete a la comunidad UTP y comparte tu talento.' : 'Ingresa para continuar en ConectaUTP.'}</p></div>
         {isRegister && <div className="mt-6 grid grid-cols-2 gap-3 max-sm:grid-cols-1"><AuthField label="Nombre" value={firstName} onChange={setFirstName} /><AuthField label="Apellido" value={lastName} onChange={setLastName} /></div>}
         {isRegister && <AuthField className="mt-4" label="Nombre de usuario" value={username} onChange={updateUsername} placeholder="ejemplo_01" />}
         <AuthField className="mt-4" label={isRegister ? 'Correo electrónico' : 'Correo o nombre de usuario'} type={isRegister ? 'email' : 'text'} value={identifier} onChange={setIdentifier} required />

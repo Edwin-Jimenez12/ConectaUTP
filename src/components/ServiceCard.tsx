@@ -10,7 +10,11 @@ export function ServiceCard({ service, featured = false, href }: ServiceCardProp
   const content = (
     <article className={`min-w-0 overflow-hidden rounded-[7px] border border-[#e2e2e8] bg-white ${featured ? 'col-span-1' : ''}`}>
       <div className={`relative h-[145px] overflow-hidden ${featured ? 'h-[190px]' : ''}`}>
-        <div className="h-full w-full bg-linear-to-br from-[#d9c6b0] via-[#89715f] to-[#2e4058]" />
+        {service.imageUrl ? (
+          <img className="h-full w-full object-cover" src={service.imageUrl} alt={service.imageAlt ?? service.title} />
+        ) : (
+          <div className="h-full w-full bg-linear-to-br from-[#d9c6b0] via-[#89715f] to-[#2e4058]" />
+        )}
         {featured && <span className="absolute right-2 top-2 rounded-sm bg-[#7b32ca] px-2 py-1 text-xs text-white">★ Destacada</span>}
         {service.locked && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-center text-white backdrop-blur-[4px]">
@@ -21,7 +25,7 @@ export function ServiceCard({ service, featured = false, href }: ServiceCardProp
       </div>
       <div className="p-3 pb-4">
         <div className="flex items-center gap-2">
-          <span className="h-8 w-8 shrink-0 rounded-full bg-linear-to-br from-[#454545] to-[#aaa]" aria-hidden="true" />
+          {service.providerImageUrl ? <img className="h-8 w-8 shrink-0 rounded-full object-cover" src={service.providerImageUrl} alt="" /> : <span className="h-8 w-8 shrink-0 rounded-full bg-linear-to-br from-[#454545] to-[#aaa]" aria-hidden="true" />}
           <div>
             <h3 className="text-xs font-semibold">{service.title}</h3>
             <p className="mt-0.5 text-xs text-[#777784]">{service.provider}</p>

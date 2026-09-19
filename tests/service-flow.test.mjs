@@ -89,13 +89,31 @@ test('el perfil permite editar, guardar y sincronizar el nombre del menú', asyn
   assert.match(menu, /profile\?\.first_name/);
 });
 
-test('contacto y eliminación de cuenta tienen límites de seguridad', async () => {
+test('opiniones y eliminación de cuenta tienen límites de seguridad', async () => {
   const contactMigration = await readProjectFile('supabase/migrations/20260914000005_create_contact_messages.sql');
   const deleteFunction = await readProjectFile('supabase/functions/delete-account/index.ts');
   const contactPage = await readProjectFile('src/pages/Contactanos.tsx');
+  const feedbackFunction = await readProjectFile('supabase/functions/send-feedback/index.ts');
   assert.match(contactMigration, /create table public\.contact_messages/);
   assert.match(contactMigration, /enable row level security/);
-  assert.match(contactPage, /contact_messages/);
+  assert.doesNotMatch(contactPage, /contact_messages/);
+  assert.match(contactPage, /send-feedback/);
+  assert.match(feedbackFunction, /conectautp507@gmail\.com/);
+  assert.match(feedbackFunction, /RESEND_API_KEY/);
   assert.match(deleteFunction, /Bearer/);
   assert.match(deleteFunction, /deleteUser/);
+});
+
+test('el chat separa conversaciones y solicitudes de servicio', async () => {
+  const chatMigration = await readProjectFile('supabase/migrations/20260919000000_create_chat_conversations.sql');
+  const chatPage = await readProjectFile('src/pages/Chats.tsx');
+  const chatLib = await readProjectFile('src/lib/chat.ts');
+  const servicePage = await readProjectFile('src/pages/ServicioPublico.tsx');
+  const menu = await readProjectFile('src/components/Menu.tsx');
+  assert.match(chatMigration, /create table public\.chat_conversations/);
+  assert.match(chatMigration, /supabase_realtime/);
+  assert.match(chatPage, /Buscar usuario/);
+  assert.match(chatLib, /SERVICE_REQUEST_MESSAGE/);
+  assert.match(servicePage, /Solicitar servicio/);
+  assert.match(menu, /Abrir chats/);
 });

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { FormEvent } from 'react';
+import type { ChangeEvent, FormEvent } from 'react';
 import { useAuth } from '../auth/useAuth';
+import { uploadProfileAvatar } from '../lib/profileImages';
 import { supabase } from '../lib/supabase';
 import type { Profile, ProfileFormData, ProfileUpdate } from '../types/profile';
 import { Button } from './Button';
@@ -30,6 +31,8 @@ export function ProfileSettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const verificationStatus = profile?.institutional_email_status ?? 'not_added';
   const verificationText = verificationStatus === 'verified'
     ? '◉ Verificación institucional verificada'
@@ -38,6 +41,11 @@ export function ProfileSettingsPage() {
       : verificationStatus === 'pending'
         ? '◉ Verificación institucional pendiente'
         : '◉ Agrega tu correo institucional';
+  const avatarUrl = avatarPreview ?? profile?.avatar_url ?? null;
+
+  useEffect(() => () => {
+    if (avatarPreview?.startsWith('blob:')) URL.revokeObjectURL(avatarPreview);
+  }, [avatarPreview]);
 
   const loadProfile = useCallback(async (userId: string) => {
     setIsLoading(true);
@@ -49,6 +57,7 @@ export function ProfileSettingsPage() {
       setProfile(currentProfile);
       updateProfile(currentProfile);
       setForm(profileToForm(currentProfile));
+      setAvatarPreview(null);
     } else {
       const { data: created, error: createError } = await supabase.from('profiles').insert({ id: userId }).select().single();
       if (createError) {
@@ -58,6 +67,7 @@ export function ProfileSettingsPage() {
         setProfile(createdProfile);
         updateProfile(createdProfile);
         setForm(profileToForm(createdProfile));
+        setAvatarPreview(null);
       }
     }
     setIsLoading(false);
@@ -69,6 +79,36 @@ export function ProfileSettingsPage() {
 
   function updateForm(changes: Partial<ProfileFormData>) {
     setForm((current) => ({ ...current, ...changes }));
+  }
+
+  async function handleAvatarChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!session || !file) return;
+
+    setAvatarPreview(URL.createObjectURL(file));
+    setIsUploadingAvatar(true);
+    setMessage('');
+    try {
+      const result = await uploadProfileAvatar(session.user.id, file, profile?.avatar_url ?? null);
+      if (result.error || !result.url) {
+        setAvatarPreview(null);
+        setMessage(result.error instanceof Error ? result.error.message : 'No se pudo subir la foto de perfil.');
+        return;
+      }
+      const updatedProfile = profile ? { ...profile, avatar_url: result.url } : null;
+      if (updatedProfile) {
+        setProfile(updatedProfile);
+        updateProfile(updatedProfile);
+      }
+      setAvatarPreview(result.url);
+      setMessage('Foto de perfil actualizada correctamente.');
+    } catch (error) {
+      setAvatarPreview(null);
+      setMessage(error instanceof Error ? error.message : 'No se pudo subir la foto de perfil.');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -116,15 +156,18 @@ export function ProfileSettingsPage() {
       <div className="mt-4 grid grid-cols-[minmax(0,1fr)_220px] gap-4 max-xl:grid-cols-1">
         <div>
           <div className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
-            <div className="flex items-center gap-3"><span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#eef0f7] text-2xl text-[#24304c]">●</span><div><h2 className="text-base font-semibold">{[form.first_name, form.last_name].filter(Boolean).join(' ') || 'Tu nombre'}</h2><p className="text-sm text-[#676878]">@{form.username || 'username'}</p><span className="mt-1 inline-block rounded bg-[#fff0c8] px-2 py-1 text-xs text-[#99751d]">{verificationText}</span></div></div>
-            <Button variant="outline" className="text-sm" disabled>Cambiar foto</Button>
+            <div className="flex items-center gap-3"><div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eef0f7] text-2xl text-[#24304c]">{avatarUrl ? <img className="h-full w-full object-cover" src={avatarUrl} alt="Foto de perfil" /> : '●'}</div><div><h2 className="text-base font-semibold">{[form.first_name, form.last_name].filter(Boolean).join(' ') || 'Tu nombre'}</h2><p className="text-sm text-[#676878]">@{form.username || 'username'}</p><span className="mt-1 inline-block rounded bg-[#fff0c8] px-2 py-1 text-xs text-[#99751d]">{verificationText}</span></div></div>
+            <label className={`inline-flex min-h-10 cursor-pointer items-center rounded-md border border-[#7b32ca] px-4 text-sm text-[#7b32ca] ${isUploadingAvatar ? 'cursor-wait opacity-60' : ''}`}>
+              {isUploadingAvatar ? 'Subiendo...' : 'Cambiar foto'}
+              <input className="sr-only" type="file" accept="image/*" disabled={isUploadingAvatar} onChange={handleAvatarChange} />
+            </label>
           </div>
           <form className="mt-3 rounded-lg border border-slate-200 p-3" onSubmit={handleSubmit}>
             <ProfileFormFields value={form} onChange={updateForm} disabled={!isEditing} />
             <div className="mt-5 flex justify-end gap-3 border-t border-slate-100 pt-4"><Button variant="outline" type="button" className="text-sm" disabled={!isEditing || isSaving} onClick={() => { if (profile) setForm(profileToForm(profile)); setIsEditing(false); setMessage(''); }}>Cancelar</Button><Button type="submit" className="text-sm" disabled={!isEditing || isSaving}>{isSaving ? 'Guardando...' : 'Guardar cambios'}</Button></div>
           </form>
         </div>
-        <PublicProfilePreview value={form} verificationStatus={verificationStatus} />
+        <PublicProfilePreview value={form} verificationStatus={verificationStatus} avatarUrl={avatarUrl} />
       </div>
       {message && <p className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-[#eaf8ee] px-5 py-3 text-sm font-medium text-[#268044] shadow-lg" role="status" aria-live="polite">{message}</p>}
     </SettingsLayout>
