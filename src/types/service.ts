@@ -16,7 +16,7 @@ export interface DatabaseService {
   updated_at: string;
 }
 
-export interface PublicService extends Pick<DatabaseService, 'id' | 'owner_id' | 'category_id' | 'modality' | 'price' | 'rating' | 'review_count'> {
+export interface PublicService extends Pick<DatabaseService, 'id' | 'owner_id' | 'category_id' | 'modality' | 'price' | 'rating' | 'review_count' | 'description'> {
   title: string;
   created_at: string;
   category_name: string;
@@ -35,10 +35,12 @@ export interface ServiceCardData {
   price: string;
   rating: string;
   category: string;
+  description: string;
   imageUrl?: string;
   imageAlt?: string;
   providerImageUrl?: string | null;
   locked?: boolean;
+  requestHref?: string;
 }
 
 export interface ServiceImage {

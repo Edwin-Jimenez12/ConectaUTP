@@ -6,7 +6,7 @@ import { ServiceCard } from '../components/ServiceCard';
 import { getServiceCoverImages, listPublicServices } from '../lib/services';
 import type { PublicService, ServiceCardData } from '../types/service';
 
-function toCard(service: PublicService, canView: boolean): ServiceCardData {
+function toCard(service: PublicService, canView: boolean, userId?: string): ServiceCardData {
   return {
     id: service.id,
     title: service.title,
@@ -14,10 +14,12 @@ function toCard(service: PublicService, canView: boolean): ServiceCardData {
     price: service.price === null ? 'Precio por definir' : `Desde B/.${service.price}`,
     rating: service.rating.toFixed(1),
     category: service.category_name,
+    description: service.description,
     imageUrl: service.cover_image_url,
     imageAlt: service.cover_image_alt,
     providerImageUrl: service.provider_avatar_url,
     locked: !canView,
+    requestHref: service.owner_id !== userId ? (canView ? `#chats/${service.id}` : '#login') : undefined,
   };
 }
 
@@ -110,7 +112,7 @@ function HeroSection() {
   );
 }
 
-function HorizontalServiceRow({ services, canView, featured = false }: { services: PublicService[]; canView: boolean; featured?: boolean }) {
+function HorizontalServiceRow({ services, canView, userId, featured = false }: { services: PublicService[]; canView: boolean; userId?: string; featured?: boolean }) {
   const rowRef = useRef<HTMLDivElement>(null);
   const [canScroll, setCanScroll] = useState({ left: false, right: false });
   const visibleServices = services.slice(0, 10);
@@ -142,7 +144,7 @@ function HorizontalServiceRow({ services, canView, featured = false }: { service
       <div className="flex gap-[13px] overflow-x-hidden pb-3 pr-1" ref={rowRef}>
         {visibleServices.map((service, index) => (
         <div className={`${featured ? 'w-[310px]' : 'w-[250px]'} shrink-0 max-sm:w-[82vw]`} key={service.id}>
-          <ServiceCard service={toCard(service, canView)} featured={featured && index === 0} href={`#servicio/${service.id}`} />
+          <ServiceCard service={toCard(service, canView, userId)} layout="grid" featured={featured && index === 0} href={`#servicio/${service.id}`} />
         </div>
         ))}
       </div>
@@ -152,7 +154,7 @@ function HorizontalServiceRow({ services, canView, featured = false }: { service
   );
 }
 
-function ServicesSection({ services, canView, message }: { services: PublicService[]; canView: boolean; message: string }) {
+function ServicesSection({ services, canView, message, userId }: { services: PublicService[]; canView: boolean; message: string; userId?: string }) {
   const featured = [...services].sort((a, b) => b.rating - a.rating || b.review_count - a.review_count).slice(0, 4);
   return (
     <section className="mx-auto w-[calc(100%-48px)] max-w-7xl pb-12 pt-7 text-center" id="explorar">
@@ -160,11 +162,11 @@ function ServicesSection({ services, canView, message }: { services: PublicServi
       <div className="text-left">
         <h2 className="mb-2 text-2xl font-semibold">Servicios destacados</h2>
         <p className="mb-3 text-sm text-[#676878]">Publicaciones reales con mejor valoración y mayor interacción.</p>
-        {featured.length > 0 ? <HorizontalServiceRow services={featured} canView={canView} featured /> : <p className="rounded-lg border border-slate-200 p-5 text-sm text-[#676878]">No hay servicios destacados todavía.</p>}
+        {featured.length > 0 ? <HorizontalServiceRow services={featured} canView={canView} userId={userId} featured /> : <p className="rounded-lg border border-slate-200 p-5 text-sm text-[#676878]">No hay servicios destacados todavía.</p>}
       </div>
       <div className="mt-8 text-left">
         <h2 className="mb-3 text-2xl font-semibold">Explora servicios</h2>
-        {services.length > 0 ? <HorizontalServiceRow services={services} canView={canView} /> : !message && <p className="rounded-lg border border-slate-200 p-5 text-sm text-[#676878]">No hay servicios publicados todavía.</p>}
+        {services.length > 0 ? <HorizontalServiceRow services={services} canView={canView} userId={userId} /> : !message && <p className="rounded-lg border border-slate-200 p-5 text-sm text-[#676878]">No hay servicios publicados todavía.</p>}
       </div>
     </section>
   );
@@ -205,5 +207,5 @@ export function Inicio() {
     })();
     return () => { active = false; };
   }, [session]);
-  return <><HeroSection /><ServicesSection services={services} canView={Boolean(session)} message={message} /><ShareBanner /></>;
+  return <><HeroSection /><ServicesSection services={services} canView={Boolean(session)} userId={session?.user.id} message={message} /><ShareBanner /></>;
 }
