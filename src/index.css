@@ -64,6 +64,11 @@ body[data-theme='dark'] {
   background-color: #10182d !important;
 }
 
+[data-theme='dark'] [class~='bg-[#f5f4f8]'],
+[data-theme='dark'] [class~='bg-slate-50'] {
+  background-color: #171f34 !important;
+}
+
 [data-theme='dark'] [class~='text-[#141414]'] {
   color: #edf1fb !important;
 }

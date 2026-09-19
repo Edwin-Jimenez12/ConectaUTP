@@ -3,7 +3,6 @@ select
   services.id,
   services.owner_id,
   services.title,
-  services.description,
   services.category_id,
   service_categories.name as category_name,
   services.modality,
@@ -17,7 +16,8 @@ select
   profiles.username as provider_username,
   profiles.institutional_email_status,
   services.created_at,
-  profiles.avatar_url as provider_avatar_url
+  profiles.avatar_url as provider_avatar_url,
+  services.description
 from public.services
 join public.service_categories on service_categories.id = services.category_id
 join public.profiles on profiles.id = services.owner_id

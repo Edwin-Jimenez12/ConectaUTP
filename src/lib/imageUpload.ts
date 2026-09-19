@@ -72,3 +72,24 @@ export async function uploadServiceImages(serviceId: string, files: File[], altT
 
   return paths;
 }
+
+export async function replaceServiceImage(imageId: string, oldPath: string, file: File, altText: string) {
+  const compressed = await compressImage(file);
+  const newPath = `${oldPath.split('/')[0]}/${crypto.randomUUID()}.webp`;
+  const upload = await supabase.storage
+    .from('service-images')
+    .upload(newPath, compressed, { contentType: 'image/webp' });
+  if (upload.error) throw upload.error;
+
+  const update = await supabase
+    .from('service_images')
+    .update({ storage_path: newPath, alt_text: altText.trim() })
+    .eq('id', imageId);
+  if (update.error) {
+    await supabase.storage.from('service-images').remove([newPath]);
+    throw update.error;
+  }
+
+  await supabase.storage.from('service-images').remove([oldPath]);
+  return newPath;
+}

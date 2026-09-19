@@ -26,6 +26,12 @@ test('la vista pública expone la fecha usada por el catálogo', async () => {
   assert.match(migration, /services\.created_at/);
 });
 
+test('la vista pública expone la descripción de los servicios', async () => {
+  const migration = await readProjectFile('supabase/migrations/20260920000000_expose_service_description.sql');
+  assert.match(migration, /create or replace view public\.public_services/);
+  assert.match(migration, /services\.description/);
+});
+
 test('el flujo de publicación usa estados y compresión antes de subir imágenes', async () => {
   const createPage = await readProjectFile('src/pages/CrearServicio.tsx');
   const uploadHelper = await readProjectFile('src/lib/imageUpload.ts');

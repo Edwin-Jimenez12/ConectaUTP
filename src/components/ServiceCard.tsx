@@ -12,20 +12,20 @@ export function ServiceCard({ service, featured = false, href, layout = 'grid' }
   const isList = layout === 'list';
   const ratingBadge = <span className={`inline-flex items-center gap-1 font-semibold text-[#6f45bd] ${isList ? 'text-sm' : 'text-xs'}`} aria-label={`Calificación ${service.rating}`}><Star aria-hidden="true" className={`${isList ? 'h-4 w-4' : 'h-3.5 w-3.5'} fill-current`} />{service.rating}</span>;
   const providerBlock = <a className="flex min-w-0 items-start gap-3 focus-visible:outline-2 focus-visible:outline-[#7b32ca]" href={href}>
-    {service.providerImageUrl ? <img className={`${isList ? 'h-12 w-12' : 'h-8 w-8'} shrink-0 rounded-full object-cover`} src={service.providerImageUrl} alt="" /> : <span className={`${isList ? 'h-12 w-12' : 'h-8 w-8'} shrink-0 rounded-full bg-linear-to-br from-[#454545] to-[#aaa]`} aria-hidden="true" />}
+    {service.providerImageUrl ? <img className={`${isList ? 'h-14 w-14' : 'h-8 w-8'} shrink-0 rounded-full object-cover`} src={service.providerImageUrl} alt="" /> : <span className={`${isList ? 'h-14 w-14' : 'h-8 w-8'} shrink-0 rounded-full bg-linear-to-br from-[#454545] to-[#aaa]`} aria-hidden="true" />}
     <div className="min-w-0">
-      <h3 className={`${isList ? 'text-base' : 'text-xs'} font-semibold leading-tight`}>{service.title}</h3>
-      <p className={`mt-1 ${isList ? 'text-sm' : 'text-xs'} text-[#777784]`}>{service.provider}</p>
-      <p className={`mt-0.5 ${isList ? 'text-sm' : 'text-xs'} text-[#777784]`}>{service.category}</p>
-      <p className={`mt-2 line-clamp-2 ${isList ? 'text-sm leading-relaxed' : 'text-xs leading-relaxed'} text-[#676878]`}>{service.description}</p>
+      <h3 className={`${isList ? 'text-lg' : 'text-xs'} font-semibold leading-tight`}>{service.title}</h3>
+      <p className={`mt-1 ${isList ? 'text-base' : 'text-xs'} text-[#777784]`}>{service.provider}</p>
+      <p className={`mt-0.5 ${isList ? 'text-base' : 'text-xs'} text-[#777784]`}>{service.category}</p>
+      {isList && <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-[#676878]">{service.description}</p>}
     </div>
   </a>;
 
   return (
     <article className={`min-w-0 overflow-hidden rounded-[7px] border border-[#e2e2e8] bg-white ${isList ? 'flex' : ''} ${featured ? 'col-span-1' : ''}`}>
-      <a className={`relative block aspect-[4/5] overflow-hidden bg-[#f5f4f8] focus-visible:outline-2 focus-visible:outline-[#7b32ca] ${isList ? 'w-44 shrink-0 max-sm:w-32' : 'w-full'}`} href={href} aria-label={`Ver ${service.title}`}>
+      <a className={`relative block aspect-[3/2] overflow-hidden bg-[#f5f4f8] focus-visible:outline-2 focus-visible:outline-[#7b32ca] ${isList ? 'w-72 shrink-0 max-sm:w-36' : 'w-full'}`} href={href} aria-label={`Ver ${service.title}`}>
         {service.imageUrl ? (
-          <img className="block h-full w-full object-cover" src={service.imageUrl} alt={service.imageAlt ?? service.title} />
+          <img className="block h-full w-full object-contain" src={service.imageUrl} alt={service.imageAlt ?? service.title} />
         ) : (
           <div className="h-full w-full bg-linear-to-br from-[#d9c6b0] via-[#89715f] to-[#2e4058]" />
         )}
@@ -39,7 +39,7 @@ export function ServiceCard({ service, featured = false, href, layout = 'grid' }
       </a>
       <div className={`${isList ? 'flex min-w-0 flex-1 flex-col p-5' : 'p-3'} pb-4`}>
         {isList ? <div className="mb-5 flex items-start justify-between gap-5">{providerBlock}{ratingBadge}</div> : <><div className="mb-3 flex items-center justify-between gap-2">{ratingBadge}</div>{providerBlock}</>}
-        <div className={`${isList ? 'mt-auto border-t border-[#eeeef4] pt-4 text-sm' : 'mt-4 text-xs'} flex items-center justify-between gap-2`}>
+        <div className={`${isList ? 'mt-auto pt-4 text-sm' : 'mt-4 text-xs'} flex items-center justify-between gap-2`}>
           <span className="font-medium text-[#7b32ca]">{service.price}</span>
           {service.requestHref && <button className={`cursor-pointer rounded-md bg-[#7b32ca] font-semibold text-white transition-colors hover:bg-[#6422b0] ${isList ? 'px-4 py-2.5 text-sm' : 'px-3 py-2 text-[11px]'}`} type="button" onClick={() => { window.location.hash = service.requestHref ?? ''; }}>Solicitar servicio</button>}
         </div>
