@@ -90,11 +90,11 @@ function HeroVisual() {
 
 function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-[#f3f0ff]" id="inicio">
-      <div className="absolute inset-0">
+    <section className="hero-section relative overflow-hidden bg-[#f3f0ff]" id="inicio">
+      <div className="hero-visual-layer absolute inset-0">
         <HeroVisual />
       </div>
-      <div className="relative z-10 mx-auto flex min-h-[380px] w-[calc(100%-48px)] max-w-7xl items-center max-lg:min-h-[400px] max-md:min-h-[560px]">
+      <div className="relative z-10 mx-auto flex min-h-[380px] w-[calc(100%-48px)] max-w-7xl items-center max-lg:min-h-[470px] max-md:min-h-[500px]">
         <div className="relative max-w-[600px] max-md:mt-5">
           <h1 className="m-0 text-5xl font-bold max-md:text-4xl">Lo que necesitas,<br />dentro de tu <span className="text-[#7b32ca]">comunidad</span></h1>
           <p className="hero-subtitle my-3 mb-4 max-w-[480px] text-base leading-[1.45] text-[#000000]/75 max-md:text-sm">Encuentra u ofrece servicios dentro de la comunidad UTP y conecta con estudiantes que pueden ayudarte a lograr más.</p>

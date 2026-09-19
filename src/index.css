@@ -257,6 +257,20 @@ button:not(:disabled) {
 .hero-network-core { filter: drop-shadow(0 14px 24px rgba(0,0,0,0.2)); }
 .hero-network-stage { transition: transform 180ms ease-out; }
 
+@media (max-width: 1024px) {
+  .hero-visual-layer {
+    display: none;
+  }
+
+  .hero-section {
+    background: linear-gradient(135deg, #f3f0ff 0%, #e9e4ff 100%);
+  }
+
+  [data-theme='dark'] .hero-section {
+    background: linear-gradient(135deg, #0f172a 0%, #151d3a 58%, #1d2b5a 100%);
+  }
+}
+
 @media (max-width: 640px) {
   .hero-service-card { max-width: 132px; padding: 7px 8px; }
   .hero-service-card b { font-size: 9px; }

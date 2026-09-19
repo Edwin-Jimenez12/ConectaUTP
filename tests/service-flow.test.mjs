@@ -98,7 +98,7 @@ test('opiniones y eliminación de cuenta tienen límites de seguridad', async ()
   assert.match(contactMigration, /enable row level security/);
   assert.doesNotMatch(contactPage, /contact_messages/);
   assert.match(contactPage, /send-feedback/);
-  assert.match(feedbackFunction, /conectautp507@gmail\.com/);
+  assert.match(feedbackFunction, /conectautp2@gmail\.com/);
   assert.match(feedbackFunction, /RESEND_API_KEY/);
   assert.match(deleteFunction, /Bearer/);
   assert.match(deleteFunction, /deleteUser/);
