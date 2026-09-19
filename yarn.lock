@@ -1064,8 +1064,10 @@ __metadata:
     eslint-plugin-react-hooks: "npm:^7.1.1"
     eslint-plugin-react-refresh: "npm:^0.5.4"
     globals: "npm:^17.11.0"
+    lucide-react: "npm:^1.47.0"
     react: "npm:^19.2.8"
     react-dom: "npm:^19.2.8"
+    react-icons: "npm:^5.7.0"
     tailwindcss: "npm:^4.3.3"
     typescript: "npm:~6.0.2"
     typescript-eslint: "npm:^8.67.0"
@@ -1831,6 +1833,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lucide-react@npm:^1.47.0":
+  version: 1.47.0
+  resolution: "lucide-react@npm:1.47.0"
+  peerDependencies:
+    react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: 10c0/d32cbd9e3490bf5b3a4b4d8a0030aa3f73165c0dafe26b0207053fc159733860bc790e17266d3ff9ff2c58858719c08178832d10330f50506d26d8213633a05f
+  languageName: node
+  linkType: hard
+
 "magic-string@npm:^0.30.21":
   version: 0.30.21
   resolution: "magic-string@npm:0.30.21"
@@ -2026,6 +2037,15 @@ __metadata:
   peerDependencies:
     react: ^19.2.8
   checksum: 10c0/41ba2247b76f687fcfe5bbc99f514d6b851d8c8041c2f5ded36ed05bd7fdc5208cacbac9de51e3e6633e77f96f44cec9f0d4a5a55184dba4e00738f224439134
+  languageName: node
+  linkType: hard
+
+"react-icons@npm:^5.7.0":
+  version: 5.7.0
+  resolution: "react-icons@npm:5.7.0"
+  peerDependencies:
+    react: "*"
+  checksum: 10c0/cc5ae92e61ef9d8fc83cb3f3ac2710deab9174c5831bdaf2a94b099acfc91074a60d4b3adfd3165dcb9b21799ca6c760b3f4f6596d75198c1ed2ea44240818c8
   languageName: node
   linkType: hard
 

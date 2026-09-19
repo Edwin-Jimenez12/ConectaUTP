@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react';
 import { Button } from './Button';
 import { plans } from '../pages/planes.data';
 
@@ -29,7 +30,7 @@ export function PlanCard({ plan }: { plan: (typeof plans)[number] }) {
 
       <ul className="mt-5 space-y-3 text-sm text-[#454653]">
         {plan.features.map((feature) => (
-          <li key={feature}>✓ {feature}</li>
+          <li className="flex items-start gap-2" key={feature}><Check aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-[#7b32ca]" />{feature}</li>
         ))}
       </ul>
 

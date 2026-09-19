@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight, Share2 } from 'lucide-react';
 import { useAuth } from '../auth/useAuth';
 import { Button } from '../components/Button';
 import { ServiceCard } from '../components/ServiceCard';
@@ -145,8 +146,8 @@ function HorizontalServiceRow({ services, canView, featured = false }: { service
         </div>
         ))}
       </div>
-      <button className="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[#dedee8] bg-white text-lg text-[#5420a8] shadow-md disabled:cursor-not-allowed disabled:opacity-0" type="button" onClick={() => moveRow(-1)} disabled={!canScroll.left} aria-label="Ver servicios anteriores">←</button>
-      <button className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[#dedee8] bg-white text-lg text-[#5420a8] shadow-md disabled:cursor-not-allowed disabled:opacity-0" type="button" onClick={() => moveRow(1)} disabled={!canScroll.right} aria-label="Ver más servicios">→</button>
+      <button className="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[#dedee8] bg-white text-lg text-[#5420a8] shadow-md disabled:cursor-not-allowed disabled:opacity-0" type="button" onClick={() => moveRow(-1)} disabled={!canScroll.left} aria-label="Ver servicios anteriores"><ChevronLeft aria-hidden="true" className="h-5 w-5" /></button>
+      <button className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[#dedee8] bg-white text-lg text-[#5420a8] shadow-md disabled:cursor-not-allowed disabled:opacity-0" type="button" onClick={() => moveRow(1)} disabled={!canScroll.right} aria-label="Ver más servicios"><ChevronRight aria-hidden="true" className="h-5 w-5" /></button>
     </div>
   );
 }
@@ -170,7 +171,7 @@ function ServicesSection({ services, canView, message }: { services: PublicServi
 }
 
 function ShareBanner() {
-  return <section className="mx-auto mb-12 flex min-h-[110px] w-[calc(100%-48px)] max-w-7xl items-center gap-7 rounded-xl bg-linear-to-r from-[#3d44da] to-[#7b32ca] px-9 py-5 text-white max-md:flex-wrap max-md:gap-4 max-md:px-5"><div className="flex h-14 w-14 items-center justify-center rounded-lg border border-white/70 text-3xl" aria-hidden="true">♧</div><div><h2 className="mb-1 text-xl font-semibold">¿Tienes una habilidad que compartir?</h2><p className="text-sm leading-[1.35]">Publica tu servicio y conecta con personas<br />de tu comunidad.</p></div><Button variant="secondary" className="ml-auto min-w-[180px] text-sm max-md:ml-0" onClick={() => { window.location.hash = '#publicar'; }}>Publicar mi servicio</Button></section>;
+  return <section className="mx-auto mb-12 flex min-h-[110px] w-[calc(100%-48px)] max-w-7xl items-center gap-7 rounded-xl bg-linear-to-r from-[#3d44da] to-[#7b32ca] px-9 py-5 text-white max-md:flex-wrap max-md:gap-4 max-md:px-5"><div className="flex h-14 w-14 items-center justify-center rounded-lg border border-white/70" aria-hidden="true"><Share2 className="h-7 w-7" /></div><div><h2 className="mb-1 text-xl font-semibold">¿Tienes una habilidad que compartir?</h2><p className="text-sm leading-[1.35]">Publica tu servicio y conecta con personas<br />de tu comunidad.</p></div><Button variant="secondary" className="ml-auto min-w-[180px] text-sm max-md:ml-0" onClick={() => { window.location.hash = '#publicar'; }}>Publicar mi servicio</Button></section>;
 }
 
 export function Inicio() {

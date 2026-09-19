@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import { ArrowUpRight, Mail } from 'lucide-react';
+import { SiInstagram, SiWhatsapp } from 'react-icons/si';
 
 const footerLinks = [
   { label: 'Inicio', href: '#inicio' },
@@ -22,7 +24,7 @@ export function Footer() {
               y encuentra personas que pueden ayudarte.
             </p>
             <a className="mt-6 inline-flex min-h-10 items-center rounded-md border border-white/30 px-4 text-sm font-semibold text-white transition-colors hover:border-white hover:bg-white hover:text-[#182044] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" href="#registro">
-              Únete a ConectaUTP <span className="ml-2" aria-hidden="true">↗</span>
+              Únete a ConectaUTP <ArrowUpRight aria-hidden="true" className="ml-2 h-4 w-4" />
             </a>
           </div>
           <div>
@@ -37,9 +39,9 @@ export function Footer() {
             <h2 className="mb-4 text-lg font-semibold">Conecta con nosotros</h2>
             <p className="max-w-xs text-sm leading-6 text-white/70">Síguenos y mantente al día con nuevas oportunidades dentro de la comunidad.</p>
             <div className="mt-5 flex gap-3" aria-label="Redes sociales">
-              <SocialLink href="#instagram" label="Instagram"><InstagramIcon /></SocialLink>
-              <SocialLink href="#whatsapp" label="WhatsApp"><WhatsAppIcon /></SocialLink>
-              <SocialLink href="#correo" label="Correo electrónico"><EmailIcon /></SocialLink>
+              <SocialLink href="#instagram" label="Instagram"><SiInstagram aria-hidden="true" className="h-5 w-5" /></SocialLink>
+              <SocialLink href="#whatsapp" label="WhatsApp"><SiWhatsapp aria-hidden="true" className="h-5 w-5" /></SocialLink>
+              <SocialLink href="#correo" label="Correo electrónico"><Mail aria-hidden="true" className="h-5 w-5" /></SocialLink>
             </div>
           </div>
         </div>
@@ -54,16 +56,4 @@ export function Footer() {
 
 function SocialLink({ children, href, label }: { children: ReactNode; href: string; label: string }) {
   return <a className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white/80 transition-all hover:-translate-y-1 hover:border-white hover:bg-white hover:text-[#182044] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" href={href} aria-label={label}>{children}</a>;
-}
-
-function InstagramIcon() {
-  return <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r=".8" fill="currentColor" stroke="none" /></svg>;
-}
-
-function WhatsAppIcon() {
-  return <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4A8 8 0 1 1 20 11.5Z" /><path d="M9 8.5c.2-.4.5-.4.8-.3l.8.9c.2.2.2.5 0 .8l-.4.5c.5 1 1.2 1.7 2.2 2.2l.5-.4c.3-.2.6-.2.8 0l.9.8c.2.2.1.6-.2.8-.5.4-1.1.5-1.7.3-2.6-.8-4.5-2.7-5.3-5.3-.2-.6-.1-1.2.3-1.7Z" /></svg>;
-}
-
-function EmailIcon() {
-  return <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m4 7 8 6 8-6" /></svg>;
 }

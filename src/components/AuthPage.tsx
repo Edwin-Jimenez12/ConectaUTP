@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { signInWithIdentifier } from '../lib/auth';
 import { Button } from './Button';
@@ -109,17 +110,9 @@ function PasswordField({ value, showPassword, onChange, onToggle }: PasswordFiel
           aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
           onClick={onToggle}
         >
-          {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+          {showPassword ? <EyeOff aria-hidden="true" className="h-4 w-4" /> : <Eye aria-hidden="true" className="h-4 w-4" />}
         </button>
       </span>
     </label>
   );
-}
-
-function EyeIcon() {
-  return <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="2.5" /></svg>;
-}
-
-function EyeOffIcon() {
-  return <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="m3 3 18 18M10.6 6.2A9.8 9.8 0 0 1 12 6c6 0 9.5 6 9.5 6a16.8 16.8 0 0 1-3.1 3.8M6.2 6.8C3.8 8.5 2.5 12 2.5 12s3.5 6 9.5 6c1.1 0 2.1-.2 3-.5" /><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" /></svg>;
 }

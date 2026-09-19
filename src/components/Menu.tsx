@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { ChevronDown, LogOut, Menu as MenuIcon, MessageCircleMore, Moon, Sun, UserCircle2 } from 'lucide-react';
 import { useAuth } from '../auth/useAuth';
 import { Button } from './Button';
 
@@ -64,23 +65,25 @@ export function Menu({ theme, onToggleTheme }: { theme: 'light' | 'dark'; onTogg
             </a>
           ))}
         </nav>
-        <div className="flex items-center gap-2 max-sm:hidden">
+        <div className="hidden items-center gap-2 lg:flex">
           {session ? (
-            <><a className="flex h-10 w-10 items-center justify-center rounded-md border border-[#d9d2eb] text-[#5420a8] transition-colors hover:bg-[#f4f1ff]" href="#chats" aria-label="Abrir chats" title="Chats"><MessageIcon /></a><ProfileMenu displayName={displayName} avatarUrl={profile?.avatar_url} theme={theme} isOpen={isProfileOpen} onToggle={() => setIsProfileOpen(!isProfileOpen)} onToggleTheme={onToggleTheme} onClose={closeMenus} onSignOut={signOut} /></>
+            <><a className="flex h-10 w-10 items-center justify-center rounded-md border border-[#d9d2eb] text-[#5420a8] transition-colors hover:bg-[#f4f1ff]" href="#chats" aria-label="Abrir chats" title="Chats"><MessageCircleMore aria-hidden="true" className="h-5 w-5" /></a><ProfileMenu displayName={displayName} avatarUrl={profile?.avatar_url} theme={theme} isOpen={isProfileOpen} onToggle={() => setIsProfileOpen(!isProfileOpen)} onToggleTheme={onToggleTheme} onClose={closeMenus} onSignOut={signOut} /></>
           ) : (
             <AuthActions />
           )}
         </div>
-        {session && <a className="hidden h-10 w-10 items-center justify-center rounded-md border border-[#d9d2eb] text-[#5420a8] max-sm:inline-flex" href="#chats" aria-label="Abrir chats" title="Chats"><MessageIcon /></a>}
-        <button
-          className="hidden rounded border border-[#d9d2eb] px-3 py-2 text-[#5420a8] max-lg:block"
-          type="button"
-          aria-expanded={isMenuOpen}
-          aria-label="Abrir menú"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-        >
-          ☰
-        </button>
+        <div className="flex items-center gap-3 lg:hidden">
+          {session && <a className="flex h-10 w-10 items-center justify-center rounded-md border border-[#d9d2eb] text-[#5420a8]" href="#chats" aria-label="Abrir chats" title="Chats"><MessageCircleMore aria-hidden="true" className="h-5 w-5" /></a>}
+          <button
+            className="flex h-10 w-10 items-center justify-center rounded-md border border-[#d9d2eb] text-[#5420a8]"
+            type="button"
+            aria-expanded={isMenuOpen}
+            aria-label="Abrir menú"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            <MenuIcon aria-hidden="true" className="h-5 w-5" />
+          </button>
+        </div>
       </div>
       {isMenuOpen && (
         <div className="border-t border-[#e5e5ec] px-4 py-3 lg:hidden">
@@ -126,16 +129,16 @@ function ProfileMenu({ displayName, avatarUrl, theme, isOpen, onToggle, onToggle
   return (
     <div className="relative">
       <button className="flex items-center gap-2 rounded-md border border-[#d9d2eb] px-3 py-2 text-xs text-[#5420a8]" type="button" onClick={onToggle} aria-expanded={isOpen}>
-        {avatarUrl ? <img className="h-5 w-5 rounded-full object-cover" src={avatarUrl} alt="" /> : <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#eeeaff] text-[10px]">●</span>}
+        {avatarUrl ? <img className="h-5 w-5 rounded-full object-cover" src={avatarUrl} alt="" /> : <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#eeeaff] text-[#5420a8]"><UserCircle2 aria-hidden="true" className="h-4 w-4" /></span>}
         Hola, {displayName}
-        <span aria-hidden="true">⌄</span>
+        <ChevronDown aria-hidden="true" className="h-3.5 w-3.5" />
       </button>
       {isOpen && (
         <div className="absolute right-0 top-11 z-10 w-44 rounded-lg border border-slate-200 bg-white p-2 text-xs shadow-lg">
           <a className="block rounded px-3 py-2 hover:bg-[#f4f1ff]" href="#configuracion" onClick={onClose}>Mi perfil</a>
           <a className="block rounded px-3 py-2 hover:bg-[#f4f1ff]" href="#mis-servicios" onClick={onClose}>Mis servicios</a>
           <button className="flex w-full items-center justify-between rounded px-3 py-2 text-left hover:bg-[#f4f1ff]" type="button" onClick={onToggleTheme} aria-label={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}>
-            <span className="flex items-center gap-2">Apariencia<span className="text-base" aria-hidden="true">{theme === 'dark' ? <SunIcon /> : <MoonIcon />}</span></span>
+            <span className="flex items-center gap-2">Apariencia<span className="text-base" aria-hidden="true">{theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}</span></span>
           </button>
           <button className="block w-full rounded px-3 py-2 text-left hover:bg-[#f4f1ff]" type="button" onClick={() => setIsSignOutConfirmOpen(true)}>Cerrar sesión</button>
         </div>
@@ -143,7 +146,7 @@ function ProfileMenu({ displayName, avatarUrl, theme, isOpen, onToggle, onToggle
       {isSignOutConfirmOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0b1020]/60 px-4 py-6" role="presentation">
           <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="sign-out-title">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f0edff] text-xl text-[#7b32ca]" aria-hidden="true">↗</div>
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f0edff] text-[#7b32ca]" aria-hidden="true"><LogOut className="h-5 w-5" /></div>
             <h2 className="mt-4 text-lg font-semibold" id="sign-out-title">¿Cerrar sesión?</h2>
             <p className="mt-2 text-sm leading-6 text-[#676878]">Tu sesión se cerrará en este dispositivo. Podrás volver a entrar cuando quieras.</p>
             <div className="mt-6 flex gap-3 max-sm:flex-col-reverse">
@@ -155,16 +158,4 @@ function ProfileMenu({ displayName, avatarUrl, theme, isOpen, onToggle, onToggle
       )}
     </div>
   );
-}
-
-function MoonIcon() {
-  return <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path d="M20.5 15.4A8.5 8.5 0 0 1 8.6 3.5 8.5 8.5 0 1 0 20.5 15.4Z" /></svg>;
-}
-
-function SunIcon() {
-  return <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="3.5" /><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42" /></svg>;
-}
-
-function MessageIcon() {
-  return <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5 7.8 7.8 0 0 1-3.1-.64L4 20l1.5-4.2A7.5 7.5 0 1 1 20 11.5Z" /><path d="M8 11.5h.01M12 11.5h.01M16 11.5h.01" strokeLinecap="round" strokeWidth="2.4" /></svg>;
 }
