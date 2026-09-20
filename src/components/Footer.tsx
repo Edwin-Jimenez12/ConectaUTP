@@ -44,7 +44,7 @@ export function Footer() {
             <p className="max-w-xs text-sm leading-6 text-white/70">Síguenos y mantente al día con nuevas oportunidades dentro de la comunidad.</p>
             <div className="mt-5 flex gap-3" aria-label="Redes sociales">
               <SocialLink href="https://www.instagram.com/conectautp/" label="Instagram" external><SiInstagram aria-hidden="true" className="h-5 w-5" /></SocialLink>
-              <SocialLink href="#whatsapp" label="WhatsApp"><SiWhatsapp aria-hidden="true" className="h-5 w-5" /></SocialLink>
+              <SocialLink href="https://wa.me/50765591976" label="WhatsApp" external><SiWhatsapp aria-hidden="true" className="h-5 w-5" /></SocialLink>
               <SocialLink href="mailto:conectautp2@gmail.com" label="Correo electrónico"><Mail aria-hidden="true" className="h-5 w-5" /></SocialLink>
             </div>
           </div>

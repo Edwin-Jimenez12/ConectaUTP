@@ -69,6 +69,11 @@ test('la sección Nosotros se oculta para usuarios autenticados', async () => {
   assert.match(app, /session && isAboutPage/);
 });
 
+test('el enlace de WhatsApp usa el número de ConectaUTP', async () => {
+  const footer = await readProjectFile('src/components/Footer.tsx');
+  assert.match(footer, /https:\/\/wa\.me\/50765591976/);
+});
+
 test('el inicio usa el catálogo real y no datos simulados', async () => {
   const home = await readProjectFile('src/pages/Inicio.tsx');
   const card = await readProjectFile('src/components/ServiceCard.tsx');
