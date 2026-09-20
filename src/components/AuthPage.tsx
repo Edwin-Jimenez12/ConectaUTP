@@ -40,7 +40,7 @@ export function AuthPage({ mode, theme }: AuthPageProps) {
       } else if (isRegister && !result.data.session) {
         setMessage('Revisa tu correo para confirmar tu cuenta.');
       } else {
-        window.location.hash = '#configuracion';
+        window.location.hash = '#inicio';
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'No se pudo conectar con Supabase. Inténtalo nuevamente.');

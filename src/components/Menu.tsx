@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { MouseEvent } from 'react';
 import { ChevronDown, LogOut, Menu as MenuIcon, MessageCircleMore, Moon, Sun, UserCircle2 } from 'lucide-react';
 import { useAuth } from '../auth/useAuth';
 import { Button } from './Button';
@@ -20,6 +21,7 @@ export function Menu({ theme, onToggleTheme }: { theme: 'light' | 'dark'; onTogg
   const firstName = profile?.first_name?.trim().split(/\s+/)[0];
   const emailName = session?.user.email?.split('@')[0];
   const displayName = firstName || (profile ? emailName : 'usuario') || 'usuario';
+  const visibleMenuItems = session ? menuItems.filter((item) => item.href !== '#nosotros') : menuItems;
 
   useEffect(() => {
     const handleHashChange = () => setCurrentHash(window.location.hash || '#inicio');
@@ -47,17 +49,26 @@ export function Menu({ theme, onToggleTheme }: { theme: 'light' | 'dark'; onTogg
     setIsProfileOpen(false);
   }
 
+  function handleMenuClick(href: string, event: MouseEvent<HTMLAnchorElement>) {
+    closeMenus();
+    if (window.location.hash === href) {
+      event.preventDefault();
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    }
+  }
+
   return (
     <header ref={headerRef} className="fixed top-0 z-50 w-full border-b border-[#e5e5ec] bg-white">
       <div className="mx-auto flex min-h-[76px] w-[calc(100%-48px)] max-w-7xl items-center justify-between gap-4">
 
         <a href="/"><img src={theme === 'dark' ? '/LogoBlanco.svg' : '/LogoCompleto.svg'} className="h-[35px] w-auto max-sm:h-7" alt="ConectaUTP" /></a>
         <nav className="flex items-center gap-[34px] max-lg:hidden" aria-label="Navegación principal">
-          {menuItems.map((item) => (
+          {visibleMenuItems.map((item) => (
             <a
               className="group py-5 text-base font-semibold text-[#5420a8] transition-colors duration-300"
               key={item.label}
               href={item.href}
+              onClick={(event) => handleMenuClick(item.href, event)}
               aria-current={isActive(item.href) ? 'page' : undefined}
             >
               {item.label}
@@ -88,7 +99,7 @@ export function Menu({ theme, onToggleTheme }: { theme: 'light' | 'dark'; onTogg
       {isMenuOpen && (
         <div className="border-t border-[#e5e5ec] px-4 py-3 lg:hidden">
           <nav className="mx-auto flex max-w-7xl flex-col gap-3" aria-label="Menú móvil">
-            {menuItems.map((item) => <a className={`rounded px-2 py-1 ${isActive(item.href) ? 'bg-[#f0ebff] font-semibold text-[#5420a8]' : ''}`} key={item.label} href={item.href} onClick={closeMenus} aria-current={isActive(item.href) ? 'page' : undefined}>{item.label}</a>)}
+            {visibleMenuItems.map((item) => <a className={`rounded px-2 py-1 ${isActive(item.href) ? 'bg-[#f0ebff] font-semibold text-[#5420a8]' : ''}`} key={item.label} href={item.href} onClick={(event) => handleMenuClick(item.href, event)} aria-current={isActive(item.href) ? 'page' : undefined}>{item.label}</a>)}
             {session ? <ProfileMenu displayName={displayName} avatarUrl={profile?.avatar_url} theme={theme} isOpen={isProfileOpen} onToggle={() => setIsProfileOpen(!isProfileOpen)} onToggleTheme={onToggleTheme} onClose={closeMenus} onSignOut={signOut} /> : <AuthActions onClick={closeMenus} />}
           </nav>
         </div>

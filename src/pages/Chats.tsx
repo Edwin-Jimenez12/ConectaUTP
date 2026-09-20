@@ -72,7 +72,23 @@ export function Chats({ initialServiceId = '' }: { initialServiceId?: string }) 
         setStatus('No se pudo abrir la solicitud de servicio.');
         return;
       }
-      if (result.created) await sendChatMessage(result.data, session.user.id, SERVICE_REQUEST_MESSAGE);
+      const existingMessages = await listChatMessages(result.data.id);
+      if (existingMessages.error) {
+        setStatus('No se pudo revisar la conversación existente.');
+        return;
+      }
+      const alreadyRequested = (existingMessages.data ?? []).some((message) => (
+        message.sender_id === session.user.id
+        && message.service_id === data.id
+        && message.body === SERVICE_REQUEST_MESSAGE
+      ));
+      if (!alreadyRequested) {
+        const sent = await sendChatMessage(result.data, session.user.id, SERVICE_REQUEST_MESSAGE, data.id);
+        if (sent.error) {
+          setStatus('No se pudo enviar la solicitud de servicio.');
+          return;
+        }
+      }
       setSelectedId(result.data.id);
       await refreshConversations();
     });

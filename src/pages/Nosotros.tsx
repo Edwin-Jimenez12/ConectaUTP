@@ -23,7 +23,7 @@ function AboutHero() {
     <section className="border-b border-slate-100 bg-linear-to-r from-white via-[#f8f7ff] to-[#e9e4ff]">
       <div className="mx-auto flex min-h-[250px] w-[calc(100%-48px)] max-w-7xl items-center justify-between gap-8 max-lg:min-h-[280px] max-md:flex-col max-md:items-start max-md:py-7">
         <div className="max-w-[700px] shrink-0 max-md:max-w-full py-10">
-          <h1 className="mt-5 text-5xl font-bold leading-[1.12] tracking-[-1px] max-md:text-4xl">Conectamos lo que necesitas<br />con el talento de tu <br/> comunidad</h1>
+          <h1 className="mt-5 text-5xl font-bold leading-[1.12] tracking-[-1px] max-md:text-4xl">Conectamos lo que necesitas<br className="hidden md:flex"/> con el talento de tu <br/> comunidad</h1>
           <p className="mt-4 max-w-[560px] text-lg leading-[1.45] text-[#5c5e70] max-md:text-base">ConectaUTP nace para facilitar que estudiantes encuentren servicios y que puedan compartir sus habilidades con otras personas.</p>
         </div>
         <div className="relative flex h-[180px] w-[390px] max-w-full items-center justify-center overflow-hidden max-md:hidden">
@@ -49,7 +49,7 @@ export function Nosotros() {
         </div>
         <h2 className="my-6 text-center text-2xl font-semibold">Lo que nos guía</h2>
         <div className="grid grid-cols-3 gap-3 max-[600px]:grid-cols-1">{values.map((value) => <ValueCard key={value.title} {...value} />)}</div>
-        <section className="mt-5 flex items-center justify-between rounded-lg bg-linear-to-r from-[#6422d0] to-[#2671eb] px-7 py-5 text-white"><div><h2 className="text-xl font-semibold">Forma parte de ConectaUTP</h2><p className="mt-1 text-sm">Encuentra una solución o comparte lo que sabes hacer.</p></div><div className="flex gap-3 max-md:flex-wrap max-md:justify-end"><Button variant="secondary" className="min-h-10 text-sm">Explorar servicios</Button><Button className="min-h-10 border border-white bg-transparent text-sm text-white">Crear una cuenta</Button></div></section>
+        <section className="mt-5 flex items-center justify-between rounded-lg bg-linear-to-r from-[#6422d0] to-[#2671eb] px-7 py-5 text-white"><div><h2 className="text-xl font-semibold">Se parte de ConectaUTP</h2><p className="mt-1 text-sm">Encuentra una solución o comparte lo que sabes hacer.</p></div><div className="flex gap-3 max-md:flex-wrap max-md:justify-end"><Button variant="secondary" className="min-h-10 text-sm">Explorar servicios</Button><Button className="min-h-10 border border-white bg-transparent text-sm text-white">Publica tu servicio</Button></div></section>
       </section>
     </>
   );

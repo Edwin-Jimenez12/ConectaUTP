@@ -50,6 +50,25 @@ test('la aplicación tiene rutas para gestión, detalle y perfil público', asyn
   assert.match(app, /#perfil\//);
 });
 
+test('la navegación restablece la posición y el login vuelve al inicio', async () => {
+  const app = await readProjectFile('src/App.tsx');
+  const authPage = await readProjectFile('src/components/AuthPage.tsx');
+  const explore = await readProjectFile('src/pages/Explora.tsx');
+  assert.match(authPage, /window\.location\.hash = '#inicio'/);
+  assert.match(app, /window\.requestAnimationFrame\(\(\) => window\.scrollTo\(\{ top: 0, left: 0, behavior: 'auto' \}\)\)/);
+  assert.match(explore, /function changePage\(nextPage: number\)/);
+  assert.match(explore, /onPageChange=\{changePage\}/);
+});
+
+test('la sección Nosotros se oculta para usuarios autenticados', async () => {
+  const menu = await readProjectFile('src/components/Menu.tsx');
+  const footer = await readProjectFile('src/components/Footer.tsx');
+  const app = await readProjectFile('src/App.tsx');
+  assert.match(menu, /item\.href !== '#nosotros'/);
+  assert.match(footer, /link\.href !== '#nosotros'/);
+  assert.match(app, /session && isAboutPage/);
+});
+
 test('el inicio usa el catálogo real y no datos simulados', async () => {
   const home = await readProjectFile('src/pages/Inicio.tsx');
   const card = await readProjectFile('src/components/ServiceCard.tsx');
@@ -110,16 +129,23 @@ test('opiniones y eliminación de cuenta tienen límites de seguridad', async ()
   assert.match(deleteFunction, /deleteUser/);
 });
 
-test('el chat separa conversaciones y solicitudes de servicio', async () => {
+test('el chat unifica conversaciones y conserva solicitudes de servicio', async () => {
   const chatMigration = await readProjectFile('supabase/migrations/20260919000000_create_chat_conversations.sql');
+  const unifyMigration = await readProjectFile('supabase/migrations/20260921000000_unify_chat_conversations.sql');
   const chatPage = await readProjectFile('src/pages/Chats.tsx');
   const chatLib = await readProjectFile('src/lib/chat.ts');
   const servicePage = await readProjectFile('src/pages/ServicioPublico.tsx');
   const menu = await readProjectFile('src/components/Menu.tsx');
   assert.match(chatMigration, /create table public\.chat_conversations/);
   assert.match(chatMigration, /supabase_realtime/);
+  assert.match(unifyMigration, /row_number\(\) over/);
+  assert.match(unifyMigration, /disable trigger protect_chat_message_content/);
+  assert.match(unifyMigration, /enable trigger protect_chat_message_content/);
+  assert.match(unifyMigration, /on public\.chat_conversations \(participant_one_id, participant_two_id\)/);
   assert.match(chatPage, /Buscar usuario/);
+  assert.match(chatPage, /alreadyRequested/);
   assert.match(chatLib, /SERVICE_REQUEST_MESSAGE/);
+  assert.match(chatLib, /serviceId = conversation\.service_id/);
   assert.match(servicePage, /Solicitar servicio/);
   assert.match(menu, /Abrir chats/);
 });

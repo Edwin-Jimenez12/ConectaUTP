@@ -49,18 +49,18 @@ export async function listChatConversations(userId: string) {
   };
 }
 
-async function findConversation(oneId: string, twoId: string, serviceId: string | null) {
+async function findConversation(oneId: string, twoId: string) {
   const [participantOneId, participantTwoId] = [oneId, twoId].sort();
-  const query = supabase
+  return supabase
     .from('chat_conversations')
     .select('*')
     .eq('participant_one_id', participantOneId)
-    .eq('participant_two_id', participantTwoId);
-  return (serviceId ? query.eq('service_id', serviceId) : query.is('service_id', null)).maybeSingle() as unknown as Promise<PostgrestSingleResponse<ChatConversationRow>>;
+    .eq('participant_two_id', participantTwoId)
+    .maybeSingle() as unknown as Promise<PostgrestSingleResponse<ChatConversationRow>>;
 }
 
 export async function getOrCreateConversation(userId: string, otherUserId: string, serviceId: string | null = null) {
-  const existing = await findConversation(userId, otherUserId, serviceId);
+  const existing = await findConversation(userId, otherUserId);
   if (existing.error && existing.error.code !== 'PGRST116') return { data: null, created: false, error: existing.error };
   if (existing.data) return { data: existing.data, created: false, error: null };
 
@@ -72,7 +72,7 @@ export async function getOrCreateConversation(userId: string, otherUserId: strin
   }).select().single() as unknown as PostgrestSingleResponse<ChatConversationRow>;
   if (!created.error) return { data: created.data, created: true, error: null };
   if (created.error.code === '23505') {
-    const concurrent = await findConversation(userId, otherUserId, serviceId);
+    const concurrent = await findConversation(userId, otherUserId);
     return { data: concurrent.data, created: false, error: concurrent.error };
   }
   return { data: null, created: false, error: created.error };
@@ -86,10 +86,10 @@ export function listChatMessages(conversationId: string) {
     .order('created_at') as unknown as Promise<PostgrestSingleResponse<ChatMessage[]>>;
 }
 
-export function sendChatMessage(conversation: ChatConversationRow, senderId: string, body: string) {
+export function sendChatMessage(conversation: ChatConversationRow, senderId: string, body: string, serviceId = conversation.service_id) {
   return supabase.from('service_messages').insert({
     conversation_id: conversation.id,
-    service_id: conversation.service_id,
+    service_id: serviceId,
     sender_id: senderId,
     body,
   });

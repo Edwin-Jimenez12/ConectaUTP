@@ -1,8 +1,11 @@
 import { Button } from '../components/Button';
 import { PlanCard } from '../components/PlanCard';
+import { useAuth } from '../auth/useAuth';
 import { boosts, plans } from './planes.data';
 
 export function Planes() {
+  const { session } = useAuth();
+
   return (
     <>
       <section className="bg-linear-to-br from-[#f8f7ff] via-white to-[#e7ddff] px-6 py-14 text-center">
@@ -79,29 +82,15 @@ export function Planes() {
         </div>
       </section>
 
-      <section className="mx-auto grid w-[calc(100%-48px)] max-w-7xl gap-8 py-12">
-        <aside className="rounded-2xl bg-linear-to-br from-[#5420a8] to-[#2671eb] p-7 text-white 
-        flex justify-between items-center max-md:flex-col max-md:items-start">
-          
+      {!session && <section className="mx-auto grid w-[calc(100%-48px)] max-w-7xl gap-8 py-12">
+        <aside className="rounded-2xl bg-linear-to-br from-[#5420a8] to-[#2671eb] p-7 text-white flex items-center justify-between max-md:flex-col max-md:items-start">
           <div className="mt-3 max-w-6xl text-sm leading-6">
             <h2 className="text-3xl font-bold">Crece a tu ritmo</h2>
-            <p className="mt-3 text-base leading-6 text-white/90">
-            ConectaUTP mantiene el acceso básico gratuito para que cualquier
-            estudiante pueda comenzar.
-          </p>
-          
+            <p className="mt-3 text-base leading-6 text-white/90">ConectaUTP mantiene el acceso básico gratuito para que cualquier estudiante pueda comenzar.</p>
           </div>
-          <Button
-            variant="secondary"
-            className="px-10 text-xl "
-            onClick={() => {
-              window.location.hash = '#registro';
-            }}
-          >
-            Crear cuenta gratis
-          </Button>
+          <Button variant="secondary" className="px-10 text-xl" onClick={() => { window.location.hash = '#registro'; }}>Crear cuenta gratis</Button>
         </aside>
-      </section>
+      </section>}
     </>
   );
 }

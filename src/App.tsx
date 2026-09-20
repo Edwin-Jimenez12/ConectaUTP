@@ -24,7 +24,11 @@ function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => window.localStorage.getItem('conecta-theme') === 'dark' ? 'dark' : 'light');
 
   useEffect(() => {
-    const handleHashChange = () => setCurrentPage(window.location.hash || '#inicio');
+    const handleHashChange = () => {
+      setCurrentPage(window.location.hash || '#inicio');
+      window.requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' }));
+    };
+    handleHashChange();
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
@@ -52,6 +56,12 @@ function App() {
       window.location.hash = '#login';
     }
   }, [isLoading, isProtectedPage, session]);
+
+  useEffect(() => {
+    if (!isLoading && session && isAboutPage) {
+      window.location.hash = '#inicio';
+    }
+  }, [isAboutPage, isLoading, session]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
