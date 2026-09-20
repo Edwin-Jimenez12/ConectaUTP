@@ -73,6 +73,10 @@ body[data-theme='dark'] {
   color: #edf1fb !important;
 }
 
+[data-theme='dark'] [class~='text-[#363744]'] {
+  color: #d4dced !important;
+}
+
 [data-theme='dark'] [class*='text-[#454653]'],
 [data-theme='dark'] [class*='text-[#4c4c55]'],
 [data-theme='dark'] [class*='text-[#575a6c]'],

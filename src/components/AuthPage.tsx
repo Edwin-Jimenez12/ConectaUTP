@@ -4,6 +4,8 @@ import { Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { signInWithIdentifier } from '../lib/auth';
 import { Button } from './Button';
+import { hasAdminRole } from '../lib/admin';
+import { LEGAL_VERSION } from '../lib/legal';
 
 interface AuthPageProps {
   mode: 'login' | 'register';
@@ -18,6 +20,7 @@ export function AuthPage({ mode, theme }: AuthPageProps) {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -31,7 +34,16 @@ export function AuthPage({ mode, theme }: AuthPageProps) {
         ? await supabase.auth.signUp({
             email: identifier,
             password,
-            options: { data: { first_name: firstName, last_name: lastName, username } },
+            options: {
+              data: {
+                first_name: firstName,
+                last_name: lastName,
+                username,
+                terms_accepted_at: new Date().toISOString(),
+                terms_version: LEGAL_VERSION,
+                privacy_policy_version: LEGAL_VERSION,
+              },
+            },
           })
         : await signInWithIdentifier(identifier, password);
 
@@ -40,7 +52,8 @@ export function AuthPage({ mode, theme }: AuthPageProps) {
       } else if (isRegister && !result.data.session) {
         setMessage('Revisa tu correo para confirmar tu cuenta.');
       } else {
-        window.location.hash = '#inicio';
+        const isAdmin = result.data.session ? await hasAdminRole(result.data.session.user.id) : false;
+        window.location.hash = isAdmin ? '#admin' : '#inicio';
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'No se pudo conectar con Supabase. Inténtalo nuevamente.');
@@ -61,6 +74,7 @@ export function AuthPage({ mode, theme }: AuthPageProps) {
         {isRegister && <AuthField className="mt-4" label="Nombre de usuario" value={username} onChange={updateUsername} placeholder="ejemplo_01" />}
         <AuthField className="mt-4" label={isRegister ? 'Correo electrónico' : 'Correo o nombre de usuario'} type={isRegister ? 'email' : 'text'} value={identifier} onChange={setIdentifier} required />
         <PasswordField value={password} showPassword={showPassword} onChange={setPassword} onToggle={() => setShowPassword(!showPassword)} />
+        {isRegister && <label className="mt-5 flex items-start gap-3 text-xs leading-5 text-[#676878]"><input className="mt-1 h-4 w-4 shrink-0 accent-[#7b32ca]" type="checkbox" checked={acceptedTerms} required onChange={(event) => setAcceptedTerms(event.target.checked)} /><span>Acepto los <a className="font-semibold text-[#7b32ca] hover:underline" href="#terminos" target="_blank" rel="noreferrer">Términos y Condiciones</a> y he leído la <a className="font-semibold text-[#7b32ca] hover:underline" href="#politica-privacidad" target="_blank" rel="noreferrer">Política de Privacidad</a>.</span></label>}
         {message && <p className="mt-4 rounded-md bg-[#f0edff] p-3 text-sm text-[#6040b5]">{message}</p>}
         <Button type="submit" className="mt-5 w-full" disabled={isLoading}>{isLoading ? 'Procesando...' : isRegister ? 'Crear cuenta' : 'Iniciar sesión'}</Button>
         <p className="mt-5 text-center text-sm text-[#676878]">{isRegister ? '¿Ya tienes una cuenta?' : '¿Todavía no tienes una cuenta?'} <a className="font-semibold text-[#7b32ca]" href={isRegister ? '#login' : '#registro'}>{isRegister ? 'Inicia sesión' : 'Regístrate'}</a></p>

@@ -51,7 +51,7 @@ export function ExploreFilters({
       <div className="max-lg:col-span-1"><label className="mb-2 mt-3 block font-semibold" htmlFor="sort-filter">Ordenar por</label>
       <select className="h-9 w-full rounded border border-[#d9d9df] px-2 text-xs" id="sort-filter">
         <option>Más relevantes</option>
-        <option>Mejor calificados</option>
+        <option>Más recientes</option>
         <option>Precio menor</option>
       </select></div>
       <button className="mt-4 w-full text-[#7b32ca] max-lg:col-span-4 max-sm:col-span-1" type="button" onClick={() => onCategoryChange('')}>

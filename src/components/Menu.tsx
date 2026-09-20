@@ -3,25 +3,29 @@ import type { MouseEvent } from 'react';
 import { ChevronDown, LogOut, Menu as MenuIcon, MessageCircleMore, Moon, Sun, UserCircle2 } from 'lucide-react';
 import { useAuth } from '../auth/useAuth';
 import { Button } from './Button';
+import { listChatConversations, subscribeToChatNotifications } from '../lib/chat';
 
 const menuItems = [
   { label: 'Inicio', href: '#inicio' },
   { label: 'Explorar', href: '#explorar' },
   { label: 'Nosotros', href: '#nosotros' },
   { label: 'Planes', href: '#planes' },
+  { label: 'Actualizaciones', href: '#actualizaciones' },
   { label: 'Tu opinión', href: '#contactanos' },
 ];
 
 export function Menu({ theme, onToggleTheme }: { theme: 'light' | 'dark'; onToggleTheme: () => void }) {
-  const { session, profile, signOut } = useAuth();
+  const { session, profile, isAdmin, signOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const [currentHash, setCurrentHash] = useState(window.location.hash || '#inicio');
   const headerRef = useRef<HTMLElement>(null);
   const firstName = profile?.first_name?.trim().split(/\s+/)[0];
   const emailName = session?.user.email?.split('@')[0];
   const displayName = firstName || (profile ? emailName : 'usuario') || 'usuario';
   const visibleMenuItems = session ? menuItems.filter((item) => item.href !== '#nosotros') : menuItems;
+  const visibleUnreadMessages = session ? unreadMessages : 0;
 
   useEffect(() => {
     const handleHashChange = () => setCurrentHash(window.location.hash || '#inicio');
@@ -39,6 +43,25 @@ export function Menu({ theme, onToggleTheme }: { theme: 'light' | 'dark'; onTogg
     document.addEventListener('pointerdown', closeOnOutsideClick);
     return () => document.removeEventListener('pointerdown', closeOnOutsideClick);
   }, []);
+
+  useEffect(() => {
+    if (!session) {
+      return undefined;
+    }
+
+    let active = true;
+    const refreshUnreadMessages = async () => {
+      const result = await listChatConversations(session.user.id);
+      if (active) setUnreadMessages(result.data.reduce((total, conversation) => total + conversation.unreadCount, 0));
+    };
+
+    void refreshUnreadMessages();
+    const unsubscribe = subscribeToChatNotifications(session.user.id, () => { void refreshUnreadMessages(); });
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [session]);
 
   function isActive(href: string) {
     return currentHash === href || (href === '#explorar' && (currentHash.startsWith('#servicio/') || currentHash.startsWith('#perfil/')));
@@ -78,13 +101,13 @@ export function Menu({ theme, onToggleTheme }: { theme: 'light' | 'dark'; onTogg
         </nav>
         <div className="hidden items-center gap-2 lg:flex">
           {session ? (
-            <><a className="flex h-10 w-10 items-center justify-center rounded-md border border-[#d9d2eb] text-[#5420a8] transition-colors hover:bg-[#f4f1ff]" href="#chats" aria-label="Abrir chats" title="Chats"><MessageCircleMore aria-hidden="true" className="h-5 w-5" /></a><ProfileMenu displayName={displayName} avatarUrl={profile?.avatar_url} theme={theme} isOpen={isProfileOpen} onToggle={() => setIsProfileOpen(!isProfileOpen)} onToggleTheme={onToggleTheme} onClose={closeMenus} onSignOut={signOut} /></>
+            <><ChatLink unreadMessages={visibleUnreadMessages} /><ProfileMenu displayName={displayName} avatarUrl={profile?.avatar_url} theme={theme} isOpen={isProfileOpen} onToggle={() => setIsProfileOpen(!isProfileOpen)} onToggleTheme={onToggleTheme} onClose={closeMenus} onSignOut={signOut} isAdmin={isAdmin} /></>
           ) : (
             <AuthActions />
           )}
         </div>
         <div className="flex items-center gap-3 lg:hidden">
-          {session && <a className="flex h-10 w-10 items-center justify-center rounded-md border border-[#d9d2eb] text-[#5420a8]" href="#chats" aria-label="Abrir chats" title="Chats"><MessageCircleMore aria-hidden="true" className="h-5 w-5" /></a>}
+          {session && <ChatLink unreadMessages={visibleUnreadMessages} />}
           <button
             className="flex h-10 w-10 items-center justify-center rounded-md border border-[#d9d2eb] text-[#5420a8]"
             type="button"
@@ -100,11 +123,21 @@ export function Menu({ theme, onToggleTheme }: { theme: 'light' | 'dark'; onTogg
         <div className="border-t border-[#e5e5ec] px-4 py-3 lg:hidden">
           <nav className="mx-auto flex max-w-7xl flex-col gap-3" aria-label="Menú móvil">
             {visibleMenuItems.map((item) => <a className={`rounded px-2 py-1 ${isActive(item.href) ? 'bg-[#f0ebff] font-semibold text-[#5420a8]' : ''}`} key={item.label} href={item.href} onClick={(event) => handleMenuClick(item.href, event)} aria-current={isActive(item.href) ? 'page' : undefined}>{item.label}</a>)}
-            {session ? <ProfileMenu displayName={displayName} avatarUrl={profile?.avatar_url} theme={theme} isOpen={isProfileOpen} onToggle={() => setIsProfileOpen(!isProfileOpen)} onToggleTheme={onToggleTheme} onClose={closeMenus} onSignOut={signOut} /> : <AuthActions onClick={closeMenus} />}
+            {session ? <ProfileMenu displayName={displayName} avatarUrl={profile?.avatar_url} theme={theme} isOpen={isProfileOpen} onToggle={() => setIsProfileOpen(!isProfileOpen)} onToggleTheme={onToggleTheme} onClose={closeMenus} onSignOut={signOut} isAdmin={isAdmin} /> : <AuthActions onClick={closeMenus} />}
           </nav>
         </div>
       )}
     </header>
+  );
+}
+
+function ChatLink({ unreadMessages }: { unreadMessages: number }) {
+  const label = unreadMessages > 0 ? `Abrir chats, ${unreadMessages} mensajes nuevos` : 'Abrir chats';
+  return (
+    <a className="relative flex h-10 w-10 items-center justify-center rounded-md border border-[#d9d2eb] text-[#5420a8] transition-colors hover:bg-[#f4f1ff]" href="#chats" aria-label={label} title={unreadMessages > 0 ? `${unreadMessages} mensajes nuevos` : 'Chats'}>
+      <MessageCircleMore aria-hidden="true" className="h-5 w-5" />
+      {unreadMessages > 0 && <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#e44775] px-1 text-[10px] font-bold text-white">{unreadMessages > 99 ? '99+' : unreadMessages}</span>}
+    </a>
   );
 }
 
@@ -126,9 +159,10 @@ interface ProfileMenuProps {
   onToggleTheme: () => void;
   onClose: () => void;
   onSignOut: () => Promise<void>;
+  isAdmin: boolean;
 }
 
-function ProfileMenu({ displayName, avatarUrl, theme, isOpen, onToggle, onToggleTheme, onClose, onSignOut }: ProfileMenuProps) {
+function ProfileMenu({ displayName, avatarUrl, theme, isOpen, onToggle, onToggleTheme, onClose, onSignOut, isAdmin }: ProfileMenuProps) {
   const [isSignOutConfirmOpen, setIsSignOutConfirmOpen] = useState(false);
 
   async function confirmSignOut() {
@@ -148,6 +182,8 @@ function ProfileMenu({ displayName, avatarUrl, theme, isOpen, onToggle, onToggle
         <div className="absolute right-0 top-11 z-10 w-44 rounded-lg border border-slate-200 bg-white p-2 text-xs shadow-lg">
           <a className="block rounded px-3 py-2 hover:bg-[#f4f1ff]" href="#configuracion" onClick={onClose}>Mi perfil</a>
           <a className="block rounded px-3 py-2 hover:bg-[#f4f1ff]" href="#mis-servicios" onClick={onClose}>Mis servicios</a>
+          <a className="block rounded px-3 py-2 hover:bg-[#f4f1ff]" href="#favoritos" onClick={onClose}>Favoritos</a>
+          {isAdmin && <a className="block rounded px-3 py-2 font-semibold text-[#7b32ca] hover:bg-[#f4f1ff]" href="#admin" onClick={onClose}>Panel administrativo</a>}
           <button className="flex w-full items-center justify-between rounded px-3 py-2 text-left hover:bg-[#f4f1ff]" type="button" onClick={onToggleTheme} aria-label={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}>
             <span className="flex items-center gap-2">Apariencia<span className="text-base" aria-hidden="true">{theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}</span></span>
           </button>

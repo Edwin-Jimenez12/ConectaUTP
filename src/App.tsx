@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Footer } from './components/Footer';
 import { Menu } from './components/Menu';
 import { ProfileSettingsPage } from './components/ProfileSettingsPage';
@@ -17,11 +17,17 @@ import { PerfilPublico } from './pages/PerfilPublico';
 import { ServicioPublico } from './pages/ServicioPublico';
 import { Planes } from './pages/Planes';
 import { Chats } from './pages/Chats';
+import { Actualizaciones } from './pages/Actualizaciones';
+import { AdminPanel } from './pages/AdminPanel';
+import { Favoritos } from './pages/Favoritos';
+import { Terminos } from './pages/Terminos';
+import { PoliticaPrivacidad } from './pages/PoliticaPrivacidad';
 
 function App() {
-  const { session, isLoading } = useAuth();
+  const { session, isAdmin, isLoading } = useAuth();
   const [currentPage, setCurrentPage] = useState(window.location.hash || '#inicio');
   const [theme, setTheme] = useState<'light' | 'dark'>(() => window.localStorage.getItem('conecta-theme') === 'dark' ? 'dark' : 'light');
+  const hasResolvedInitialSession = useRef(false);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -37,6 +43,10 @@ function App() {
   const isAboutPage = currentPage === '#nosotros';
   const isContactPage = currentPage === '#contactanos';
   const isPlansPage = currentPage === '#planes';
+  const isUpdatesPage = currentPage === '#actualizaciones';
+  const isTermsPage = currentPage === '#terminos';
+  const isPrivacyPolicyPage = currentPage === '#politica-privacidad';
+  const isAdminPage = currentPage === '#admin';
   const isSettingsPage = currentPage === '#configuracion';
   const isPrivacyPage = currentPage === '#privacidad';
   const isSecurityPage = currentPage === '#seguridad';
@@ -45,12 +55,12 @@ function App() {
   const isRegisterPage = currentPage === '#registro';
   const isCreateServicePage = currentPage === '#publicar';
   const isManageServicesPage = currentPage === '#mis-servicios';
+  const isFavoritesPage = currentPage === '#favoritos';
   const isChatsPage = currentPage === '#chats' || currentPage.startsWith('#chats/');
   const chatServiceId = currentPage.startsWith('#chats/') ? currentPage.slice('#chats/'.length) : '';
   const serviceId = currentPage.startsWith('#servicio/') ? currentPage.slice('#servicio/'.length) : '';
   const profileId = currentPage.startsWith('#perfil/') ? currentPage.slice('#perfil/'.length) : '';
-  const isProtectedPage = isSettingsPage || isPrivacyPage || isSecurityPage || isAccountPage || isCreateServicePage || isManageServicesPage || isChatsPage;
-
+  const isProtectedPage = isSettingsPage || isPrivacyPage || isSecurityPage || isAccountPage || isCreateServicePage || isManageServicesPage || isFavoritesPage || isChatsPage || isAdminPage;
   useEffect(() => {
     if (!isLoading && isProtectedPage && !session) {
       window.location.hash = '#login';
@@ -62,6 +72,21 @@ function App() {
       window.location.hash = '#inicio';
     }
   }, [isAboutPage, isLoading, session]);
+
+  useEffect(() => {
+    if (!isLoading && isAdminPage && session && !isAdmin) {
+      window.location.hash = '#inicio';
+    }
+  }, [isAdmin, isAdminPage, isLoading, session]);
+
+  useEffect(() => {
+    if (isLoading || hasResolvedInitialSession.current) return;
+
+    hasResolvedInitialSession.current = true;
+    if (session && isAdmin && (currentPage === '#inicio' || currentPage === '#login')) {
+      window.location.hash = '#admin';
+    }
+  }, [currentPage, isAdmin, isLoading, session]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -82,6 +107,8 @@ function App() {
           <div className="flex min-h-[560px] items-center justify-center text-sm text-[#676878]">Cargando sesión...</div>
         ) : isProtectedPage && !session ? (
           <AuthPage mode="login" theme={theme} />
+        ) : isAdminPage ? (
+          isAdmin ? <AdminPanel /> : <Inicio />
         ) : serviceId ? (
           <ServicioPublico serviceId={serviceId} />
         ) : profileId ? (
@@ -90,6 +117,8 @@ function App() {
           <CrearServicio />
         ) : isManageServicesPage ? (
           <GestionServicios />
+        ) : isFavoritesPage ? (
+          <Favoritos />
         ) : isChatsPage ? (
           <Chats initialServiceId={chatServiceId} />
         ) : isExplorePage ? (
@@ -100,6 +129,12 @@ function App() {
           <Contactanos />
         ) : isPlansPage ? (
           <Planes />
+        ) : isUpdatesPage ? (
+          <Actualizaciones />
+        ) : isTermsPage ? (
+          <Terminos />
+        ) : isPrivacyPolicyPage ? (
+          <PoliticaPrivacidad />
         ) : isSettingsPage ? (
           <ProfileSettingsPage />
         ) : isPrivacyPage ? (

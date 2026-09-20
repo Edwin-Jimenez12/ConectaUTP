@@ -38,7 +38,7 @@ export async function compressImage(file: File) {
   return new File([blob], `${baseName}.webp`, { type: 'image/webp' });
 }
 
-export async function uploadServiceImages(serviceId: string, files: File[], altTexts: string[]) {
+export async function uploadServiceImages(serviceId: string, files: File[], altTexts: string[] = []) {
   if (files.length > MAX_FILES) {
     throw new Error('Puedes subir máximo 5 imágenes por servicio.');
   }

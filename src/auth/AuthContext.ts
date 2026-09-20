@@ -5,6 +5,7 @@ import type { Profile } from '../types/profile';
 export interface AuthContextValue {
   session: Session | null;
   profile: Profile | null;
+  isAdmin: boolean;
   isLoading: boolean;
   signOut: () => Promise<void>;
   updateProfile: (profile: Profile) => void;

@@ -19,8 +19,6 @@ interface EditableImage extends ServiceImage {
   pendingFile?: File;
 }
 
-const inputClass = 'mt-1 h-10 w-full rounded-md border border-slate-200 px-3 text-sm';
-
 async function fetchOwnerServices(ownerId: string) {
   return listOwnerServices(ownerId);
 }
@@ -91,12 +89,7 @@ export function GestionServicios() {
     }
     try {
       for (const image of editableImages) {
-        if (image.pendingFile) {
-          await replaceServiceImage(image.id, image.storage_path, image.pendingFile, image.alt_text);
-        } else {
-          const imageUpdate = await supabase.from('service_images').update({ alt_text: image.alt_text.trim() }).eq('id', image.id);
-          if (imageUpdate.error) throw imageUpdate.error;
-        }
+        if (image.pendingFile) await replaceServiceImage(image.id, image.storage_path, image.pendingFile, image.alt_text);
       }
       setMessage('Servicio e imágenes actualizados correctamente.');
       setSelected(data as DatabaseService);
@@ -110,7 +103,7 @@ export function GestionServicios() {
   async function changeStatus(service: DatabaseService) {
     const status: ServiceStatus = service.status === 'published' ? 'draft' : 'published';
     const { error } = await supabase.from('services').update({ status }).eq('id', service.id);
-    setMessage(error ? 'No se pudo cambiar el estado.' : 'Estado actualizado correctamente.');
+    setMessage(error ? error.message : 'Estado actualizado correctamente.');
     if (!error) await loadServices();
   }
 
@@ -127,7 +120,7 @@ export function GestionServicios() {
       {message && !selected && <p className="mt-4 rounded-md bg-[#f0edff] p-3 text-sm text-[#6040b5]">{message}</p>}
       <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_1.2fr]">
         <div className="space-y-3">{services.length === 0 && <p className="rounded-lg border border-slate-200 p-4 text-sm text-[#676878]">Todavía no tienes servicios.</p>}{services.map((service) => <article className="rounded-lg border border-slate-200 bg-white p-4" key={service.id}><div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold">{service.title}</h2><p className="mt-1 text-xs text-[#676878]">{service.status === 'published' ? 'Publicado' : 'Borrador'} · {service.price === null ? 'Precio por definir' : `B/.${service.price}`}</p></div><span className={`rounded px-2 py-1 text-xs ${service.status === 'published' ? 'bg-[#eaf8ee] text-[#268044]' : 'bg-[#fff7df] text-[#735d22]'}`}>{service.status === 'published' ? 'Activo' : 'Borrador'}</span></div><div className="mt-3 flex flex-wrap gap-2"><Button variant="outline" className="min-h-8 px-3 text-xs" onClick={() => chooseService(service)}>Editar</Button><Button variant="secondary" className="min-h-8 px-3 text-xs" onClick={() => changeStatus(service)}>{service.status === 'published' ? 'Pasar a borrador' : 'Publicar'}</Button><Button variant="outline" className="min-h-8 border-red-300 px-3 text-xs text-red-600" onClick={() => removeService(service)}>Eliminar</Button></div></article>)}</div>
-        {selected && <form className="rounded-lg border border-slate-200 bg-white p-4" onSubmit={saveEdit}><h2 className="font-semibold">Editar servicio</h2><label className="mt-4 block text-xs font-medium">Título<input className="mt-1 h-10 w-full rounded border border-slate-200 px-3 text-sm" required minLength={3} maxLength={100} value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} /></label><label className="mt-3 block text-xs font-medium">Descripción<textarea className="mt-1 min-h-32 w-full rounded border border-slate-200 p-3 text-sm" required minLength={20} maxLength={3000} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label><label className="mt-3 block text-xs font-medium">Precio desde<input className="mt-1 h-10 w-full rounded border border-slate-200 px-3 text-sm" type="number" min="0" step="0.01" value={form.price} onChange={(event) => setForm({ ...form, price: event.target.value })} /></label><div className="mt-4"><h3 className="text-xs font-semibold">Imágenes del servicio</h3>{editableImages.length === 0 ? <p className="mt-2 text-xs text-[#676878]">Este servicio no tiene imágenes guardadas.</p> : <div className="mt-2 grid gap-3 sm:grid-cols-2">{editableImages.map((image, index) => <figure className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50" key={image.id}><img className="h-32 w-full bg-[#f4f1ff] object-contain" src={image.previewUrl} alt={image.alt_text || `Imagen ${index + 1}`} /><div className="p-3"><label className="block text-xs font-medium">Texto alternativo<input className={inputClass} required minLength={3} maxLength={150} value={image.alt_text} onChange={(event) => setEditableImages((current) => current.map((currentImage) => currentImage.id === image.id ? { ...currentImage, alt_text: event.target.value } : currentImage))} /></label><button className="mt-2 cursor-pointer text-xs font-semibold text-[#7b32ca] hover:underline" type="button" onClick={() => setEditingImageId(image.id)}>Ajustar imagen</button></div></figure>)}</div>}</div><div className="mt-4 flex gap-2"><Button type="submit">Guardar cambios</Button><Button variant="outline" type="button" onClick={() => setSelected(null)}>Cancelar</Button></div>{message && <p className="mt-3 rounded-md bg-[#f0edff] p-3 text-sm text-[#6040b5]">{message}</p>}</form>}
+        {selected && <form className="rounded-lg border border-slate-200 bg-white p-4" onSubmit={saveEdit}><h2 className="font-semibold">Editar servicio</h2><label className="mt-4 block text-xs font-medium">Título<input className="mt-1 h-10 w-full rounded border border-slate-200 px-3 text-sm" required minLength={3} maxLength={100} value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} /></label><label className="mt-3 block text-xs font-medium">Descripción<textarea className="mt-1 min-h-32 w-full rounded border border-slate-200 p-3 text-sm" required minLength={20} maxLength={3000} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label><label className="mt-3 block text-xs font-medium">Precio desde<input className="mt-1 h-10 w-full rounded border border-slate-200 px-3 text-sm" type="number" min="0" step="0.01" value={form.price} onChange={(event) => setForm({ ...form, price: event.target.value })} /></label><div className="mt-4"><h3 className="text-xs font-semibold">Imágenes del servicio</h3>{editableImages.length === 0 ? <p className="mt-2 text-xs text-[#676878]">Este servicio no tiene imágenes guardadas.</p> : <div className="mt-2 grid gap-3 sm:grid-cols-2">{editableImages.map((image, index) => <figure className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50" key={image.id}><img className="h-32 w-full bg-[#f4f1ff] object-contain" src={image.previewUrl} alt={image.alt_text || `Imagen ${index + 1}`} /><div className="p-3"><button className="cursor-pointer text-xs font-semibold text-[#7b32ca] hover:underline" type="button" onClick={() => setEditingImageId(image.id)}>Ajustar imagen</button></div></figure>)}</div>}</div><div className="mt-4 flex gap-2"><Button type="submit">Guardar cambios</Button><Button variant="outline" type="button" onClick={() => setSelected(null)}>Cancelar</Button></div>{message && <p className="mt-3 rounded-md bg-[#f0edff] p-3 text-sm text-[#6040b5]">{message}</p>}</form>}
       </div>
       {editingImageId && (() => { const image = editableImages.find((currentImage) => currentImage.id === editingImageId); return image ? <ImageEditor source={image.pendingFile ?? image.previewUrl} title="Ajustar imagen del servicio" onCancel={() => setEditingImageId(null)} onSave={saveAdjustedImage} /> : null; })()}
     </section>

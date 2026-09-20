@@ -1,10 +1,52 @@
+import { useEffect, useState } from 'react';
 import { Button } from '../components/Button';
 import { PlanCard } from '../components/PlanCard';
 import { useAuth } from '../auth/useAuth';
+import { getPlanFeatureLabels, listPublicPlans, listPublicPromotions, type AdminPlan, type AdminPromotion } from '../lib/adminData';
 import { boosts, plans } from './planes.data';
+
+function mapPlan(plan: AdminPlan) {
+  return {
+    name: plan.name,
+    price: `B/.${Number(plan.price).toFixed(2)}`,
+    period: plan.billing_period === 'free' ? 'siempre' : plan.billing_period === 'yearly' ? 'por año' : plan.billing_period === 'quarterly' ? 'por trimestre' : 'por mes',
+    description: plan.description,
+    features: getPlanFeatureLabels(plan),
+    featured: plan.is_most_used,
+  };
+}
+
+function mapPromotion(promotion: AdminPromotion) {
+  const benefit = promotion.benefit_key === 'max_published_services'
+    ? `${promotion.benefit_operation === 'add' ? '+' : ''}${promotion.benefit_value} servicio${promotion.benefit_value === 1 ? '' : 's'} publicado${promotion.benefit_value === 1 ? '' : 's'}`
+    : `${promotion.benefit_value} servicio${promotion.benefit_value === 1 ? '' : 's'} destacado${promotion.benefit_value === 1 ? '' : 's'}`;
+  return {
+    name: promotion.name,
+    duration: `${promotion.duration_days} días`,
+    price: `B/.${Number(promotion.price).toFixed(2)}`,
+    benefit,
+  };
+}
 
 export function Planes() {
   const { session } = useAuth();
+  const [remotePlans, setRemotePlans] = useState<AdminPlan[]>([]);
+  const [remotePromotions, setRemotePromotions] = useState<AdminPromotion[]>([]);
+
+  useEffect(() => {
+    let isActive = true;
+    void Promise.all([listPublicPlans(), listPublicPromotions()]).then(([plansResult, promotionsResult]) => {
+      if (!isActive) return;
+      if (!plansResult.error) setRemotePlans(plansResult.data);
+      if (!promotionsResult.error) setRemotePromotions(promotionsResult.data);
+    });
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  const visiblePlans = remotePlans.length > 0 ? remotePlans.map(mapPlan) : plans;
+  const visibleBoosts = remotePromotions.length > 0 ? remotePromotions.map(mapPromotion) : boosts;
 
   return (
     <>
@@ -16,7 +58,7 @@ export function Planes() {
           Publica gratis. Crece cuando lo necesites.
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[#676878]">
-          Comienza con 3 servicios y elige un plan cuando necesites más espacio o visibilidad.
+          Comienza con el plan gratuito y elige un plan cuando necesites más espacio o visibilidad.
         </p>
       </section>
 
@@ -29,7 +71,7 @@ export function Planes() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {plans.map((plan) => (
+          {visiblePlans.map((plan) => (
             <PlanCard key={plan.name} plan={plan} />
           ))}
         </div>
@@ -52,23 +94,14 @@ export function Planes() {
           </div>
 
           <div className="mt-7 grid gap-4 md:grid-cols-3">
-            {boosts.map((boost) => (
+            {visibleBoosts.map((boost) => (
               <article
-                className={
-                  boost.badge
-                    ? 'rounded-xl border border-[#7b32ca] bg-white p-5'
-                    : 'rounded-xl border border-slate-200 bg-white p-5'
-                }
+                className="rounded-xl border border-slate-200 bg-white p-5"
                 key={boost.name}
               >
-                {boost.badge && (
-                  <span className="mb-3 w-fit rounded-full bg-[#eeeaff] px-3 py-1 text-xs font-semibold text-[#6842dd]">
-                    {boost.badge}
-                  </span>
-                )}
                 <h3 className="font-semibold">{boost.name}</h3>
                 <p className="mt-2 text-sm text-[#676878]">
-                  {boost.duration} de visibilidad promocionada
+                  {boost.benefit} durante {boost.duration}
                 </p>
                 <p className="mt-4 text-2xl font-bold text-[#5420a8]">
                   {boost.price}

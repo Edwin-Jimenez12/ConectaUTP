@@ -7,6 +7,7 @@ import type {
   ServiceModality,
   ServiceStatus,
 } from '../types/service';
+import type { PlanEntitlements } from './adminData';
 
 export interface ServiceCategory {
   id: string;
@@ -45,6 +46,10 @@ export function listOwnerServices(ownerId: string) {
     .select('*')
     .eq('owner_id', ownerId)
     .order('updated_at', { ascending: false }) as unknown as Promise<PostgrestSingleResponse<DatabaseService[]>>;
+}
+
+export function getEffectivePlanEntitlements() {
+  return supabase.rpc('get_effective_plan_entitlements') as unknown as Promise<PostgrestSingleResponse<PlanEntitlements>>;
 }
 
 export function getPublicService(serviceId: string) {
@@ -101,4 +106,44 @@ export function createService(input: NewServiceInput) {
 
 export function deleteService(serviceId: string) {
   return supabase.from('services').delete().eq('id', serviceId);
+}
+
+export async function listFavoriteServiceIds(userId: string) {
+  const result = await supabase
+    .from('service_favorites')
+    .select('service_id')
+    .eq('user_id', userId);
+
+  return {
+    data: new Set((result.data ?? []).map((favorite) => favorite.service_id as string)),
+    error: result.error,
+  };
+}
+
+export function setServiceFavorite(userId: string, serviceId: string, isFavorite: boolean) {
+  if (isFavorite) {
+    return supabase
+      .from('service_favorites')
+      .upsert({ user_id: userId, service_id: serviceId }, { onConflict: 'user_id,service_id' });
+  }
+
+  return supabase
+    .from('service_favorites')
+    .delete()
+    .eq('user_id', userId)
+    .eq('service_id', serviceId);
+}
+
+export async function listFavoriteServices(userId: string) {
+  const favoriteIds = await listFavoriteServiceIds(userId);
+  if (favoriteIds.error) return { data: null, error: favoriteIds.error };
+
+  const ids = [...favoriteIds.data];
+  if (ids.length === 0) return { data: [] as PublicService[], error: null };
+
+  return supabase
+    .from('public_services')
+    .select('*')
+    .in('id', ids)
+    .order('created_at', { ascending: false }) as unknown as Promise<PostgrestSingleResponse<PublicService[]>>;
 }

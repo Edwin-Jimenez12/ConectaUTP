@@ -3,8 +3,10 @@ import { ChevronLeft, ChevronRight, Share2 } from 'lucide-react';
 import { useAuth } from '../auth/useAuth';
 import { Button } from '../components/Button';
 import { ServiceCard } from '../components/ServiceCard';
-import { getServiceCoverImages, listPublicServices } from '../lib/services';
+import { getServiceCoverImages, listFavoriteServiceIds, listPublicServices, setServiceFavorite } from '../lib/services';
 import type { PublicService, ServiceCardData } from '../types/service';
+
+const EMPTY_FAVORITES = new Set<string>();
 
 function toCard(service: PublicService, canView: boolean, userId?: string): ServiceCardData {
   return {
@@ -12,7 +14,6 @@ function toCard(service: PublicService, canView: boolean, userId?: string): Serv
     title: service.title,
     provider: service.provider_name,
     price: service.price === null ? 'Precio por definir' : `Desde B/.${service.price}`,
-    rating: service.rating.toFixed(1),
     category: service.category_name,
     description: service.description,
     imageUrl: service.cover_image_url,
@@ -70,7 +71,7 @@ function HeroVisual() {
 
           <div className="hero-service-card hero-motion absolute left-[4%] top-[17%] [animation-delay:-1s]">
             <span className="hero-card-dot bg-[#f59e0b]" />
-            <span><b>Diseño gráfico</b><small>4.9 · B/.15</small></span>
+            <span><b>Diseño gráfico</b><small>Disponible hoy · B/.15</small></span>
           </div>
           <div className="hero-service-card hero-motion absolute right-[5%] top-[42%] [animation-delay:-3s]">
             <span className="hero-card-dot bg-[#10b981]" />
@@ -112,7 +113,7 @@ function HeroSection() {
   );
 }
 
-function HorizontalServiceRow({ services, canView, userId, featured = false }: { services: PublicService[]; canView: boolean; userId?: string; featured?: boolean }) {
+function HorizontalServiceRow({ services, canView, userId, favoriteIds, onToggleFavorite, featured = false }: { services: PublicService[]; canView: boolean; userId?: string; favoriteIds: Set<string>; onToggleFavorite: (serviceId: string) => void; featured?: boolean }) {
   const rowRef = useRef<HTMLDivElement>(null);
   const [canScroll, setCanScroll] = useState({ left: false, right: false });
   const visibleServices = services.slice(0, 10);
@@ -144,7 +145,7 @@ function HorizontalServiceRow({ services, canView, userId, featured = false }: {
       <div className="flex gap-[13px] overflow-x-hidden pb-3 pr-1" ref={rowRef}>
         {visibleServices.map((service, index) => (
         <div className={`${featured ? 'w-[310px]' : 'w-[250px]'} shrink-0 max-sm:w-[82vw]`} key={service.id}>
-          <ServiceCard service={toCard(service, canView, userId)} layout="grid" featured={featured && index === 0} href={`#servicio/${service.id}`} />
+          <ServiceCard service={toCard(service, canView, userId)} layout="grid" featured={featured && index === 0} href={`#servicio/${service.id}`} isFavorite={favoriteIds.has(service.id)} onToggleFavorite={() => onToggleFavorite(service.id)} />
         </div>
         ))}
       </div>
@@ -154,19 +155,19 @@ function HorizontalServiceRow({ services, canView, userId, featured = false }: {
   );
 }
 
-function ServicesSection({ services, canView, message, userId }: { services: PublicService[]; canView: boolean; message: string; userId?: string }) {
-  const featured = [...services].sort((a, b) => b.rating - a.rating || b.review_count - a.review_count).slice(0, 4);
+function ServicesSection({ services, canView, message, userId, favoriteIds, onToggleFavorite }: { services: PublicService[]; canView: boolean; message: string; userId?: string; favoriteIds: Set<string>; onToggleFavorite: (serviceId: string) => void }) {
+  const featured = [...services].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 4);
   return (
     <section className="mx-auto w-[calc(100%-48px)] max-w-7xl pb-12 pt-7 text-center" id="explorar">
       {message && <p className="mb-4 rounded bg-[#fff7df] p-4 text-left text-sm text-[#735d22]">{message}</p>}
       <div className="text-left">
         <h2 className="mb-2 text-2xl font-semibold">Servicios destacados</h2>
-        <p className="mb-3 text-sm text-[#676878]">Publicaciones reales con mejor valoración y mayor interacción.</p>
-        {featured.length > 0 ? <HorizontalServiceRow services={featured} canView={canView} userId={userId} featured /> : <p className="rounded-lg border border-slate-200 p-5 text-sm text-[#676878]">No hay servicios destacados todavía.</p>}
+        <p className="mb-3 text-sm text-[#676878]">Publicaciones recientes y relevantes de la comunidad.</p>
+        {featured.length > 0 ? <HorizontalServiceRow services={featured} canView={canView} userId={userId} favoriteIds={favoriteIds} onToggleFavorite={onToggleFavorite} featured /> : <p className="rounded-lg border border-slate-200 p-5 text-sm text-[#676878]">No hay servicios destacados todavía.</p>}
       </div>
       <div className="mt-8 text-left">
         <h2 className="mb-3 text-2xl font-semibold">Explora servicios</h2>
-        {services.length > 0 ? <HorizontalServiceRow services={services} canView={canView} userId={userId} /> : !message && <p className="rounded-lg border border-slate-200 p-5 text-sm text-[#676878]">No hay servicios publicados todavía.</p>}
+        {services.length > 0 ? <HorizontalServiceRow services={services} canView={canView} userId={userId} favoriteIds={favoriteIds} onToggleFavorite={onToggleFavorite} /> : !message && <p className="rounded-lg border border-slate-200 p-5 text-sm text-[#676878]">No hay servicios publicados todavía.</p>}
       </div>
     </section>
   );
@@ -180,6 +181,9 @@ export function Inicio() {
   const { session } = useAuth();
   const [services, setServices] = useState<PublicService[]>([]);
   const [message, setMessage] = useState('');
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(() => new Set());
+  const [favoriteOwnerId, setFavoriteOwnerId] = useState<string | null>(null);
+  const [favoriteError, setFavoriteError] = useState('');
   useEffect(() => {
     let active = true;
     void (async () => {
@@ -207,5 +211,46 @@ export function Inicio() {
     })();
     return () => { active = false; };
   }, [session]);
-  return <><HeroSection /><ServicesSection services={services} canView={Boolean(session)} userId={session?.user.id} message={message} /><ShareBanner /></>;
+
+  useEffect(() => {
+    if (!session) return;
+
+    let active = true;
+    void listFavoriteServiceIds(session.user.id).then((result) => {
+      if (!active) return;
+      setFavoriteIds(result.data);
+      setFavoriteOwnerId(session.user.id);
+      if (result.error) setFavoriteError('No se pudieron cargar tus favoritos.');
+    });
+    return () => { active = false; };
+  }, [session]);
+
+  async function toggleFavorite(serviceId: string) {
+    if (!session) {
+      window.location.assign('#login');
+      return;
+    }
+
+    const visibleFavoriteIds = favoriteOwnerId === session.user.id ? favoriteIds : EMPTY_FAVORITES;
+    const nextValue = !visibleFavoriteIds.has(serviceId);
+    setFavoriteIds((current) => {
+      const next = new Set(current);
+      if (nextValue) next.add(serviceId); else next.delete(serviceId);
+      return next;
+    });
+    const result = await setServiceFavorite(session.user.id, serviceId, nextValue);
+    if (result.error) {
+      setFavoriteIds((current) => {
+        const next = new Set(current);
+        if (nextValue) next.delete(serviceId); else next.add(serviceId);
+        return next;
+      });
+      setFavoriteError('No se pudo actualizar el favorito.');
+    } else {
+      setFavoriteError('');
+    }
+  }
+
+  const visibleFavoriteIds = favoriteOwnerId === session?.user.id ? favoriteIds : EMPTY_FAVORITES;
+  return <><HeroSection /><ServicesSection services={services} canView={Boolean(session)} userId={session?.user.id} message={message || favoriteError} favoriteIds={visibleFavoriteIds} onToggleFavorite={(serviceId) => void toggleFavorite(serviceId)} /><ShareBanner /></>;
 }

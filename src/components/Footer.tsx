@@ -9,6 +9,7 @@ const footerLinks = [
   { label: 'Nosotros', href: '#nosotros' },
   { label: 'Tu opinión', href: '#contactanos' },
   { label: 'Destacadas', href: '#planes' },
+  { label: 'Actualizaciones', href: '#actualizaciones' },
 ];
 
 export function Footer() {
@@ -50,7 +51,11 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-12 flex items-center justify-between gap-4 border-t border-white/15 pt-5 text-xs text-white/55 max-sm:flex-col max-sm:items-start">
-          <span>© 2026 ConectaUTP. Todos los derechos reservados.</span>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <span>© 2026 ConectaUTP. Todos los derechos reservados.</span>
+            <a className="transition-colors hover:text-white" href="#terminos">Términos y condiciones</a>
+            <a className="transition-colors hover:text-white" href="#politica-privacidad">Política de privacidad</a>
+          </div>
           <span className="inline-flex items-center ">Desarrollado por | <img src="/NexDigital.svg" className="h-15 w-auto opacity-70" alt="Nex Digital" /></span>
         </div>
       </div>

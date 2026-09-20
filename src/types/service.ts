@@ -16,14 +16,13 @@ export interface DatabaseService {
   updated_at: string;
 }
 
-export interface PublicService extends Pick<DatabaseService, 'id' | 'owner_id' | 'category_id' | 'modality' | 'price' | 'rating' | 'review_count' | 'description'> {
+export interface PublicService extends Pick<DatabaseService, 'id' | 'owner_id' | 'category_id' | 'modality' | 'price' | 'description'> {
   title: string;
   created_at: string;
   category_name: string;
   provider_name: string;
   provider_username: string | null;
   provider_avatar_url?: string | null;
-  institutional_email_status: 'not_added' | 'pending' | 'verified' | 'rejected';
   cover_image_url?: string;
   cover_image_alt?: string;
 }
@@ -33,7 +32,6 @@ export interface ServiceCardData {
   title: string;
   provider: string;
   price: string;
-  rating: string;
   category: string;
   description: string;
   imageUrl?: string;

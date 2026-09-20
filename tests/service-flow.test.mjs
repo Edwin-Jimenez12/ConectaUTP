@@ -54,7 +54,7 @@ test('la navegación restablece la posición y el login vuelve al inicio', async
   const app = await readProjectFile('src/App.tsx');
   const authPage = await readProjectFile('src/components/AuthPage.tsx');
   const explore = await readProjectFile('src/pages/Explora.tsx');
-  assert.match(authPage, /window\.location\.hash = '#inicio'/);
+  assert.match(authPage, /: '#inicio'/);
   assert.match(app, /window\.requestAnimationFrame\(\(\) => window\.scrollTo\(\{ top: 0, left: 0, behavior: 'auto' \}\)\)/);
   assert.match(explore, /function changePage\(nextPage: number\)/);
   assert.match(explore, /onPageChange=\{changePage\}/);
@@ -74,6 +74,47 @@ test('el enlace de WhatsApp usa el número de ConectaUTP', async () => {
   assert.match(footer, /https:\/\/wa\.me\/50765591976/);
 });
 
+test('el panel administrativo y las actualizaciones tienen acceso separado', async () => {
+  const app = await readProjectFile('src/App.tsx');
+  const authPage = await readProjectFile('src/components/AuthPage.tsx');
+  const menu = await readProjectFile('src/components/Menu.tsx');
+  const admin = await readProjectFile('src/pages/AdminPanel.tsx');
+  const updates = await readProjectFile('src/pages/Actualizaciones.tsx');
+  assert.match(app, /#admin/);
+  assert.match(app, /isAdmin/);
+  assert.match(authPage, /hasAdminRole\(result\.data\.session\.user\.id\)/);
+  assert.match(menu, /Actualizaciones/);
+  assert.match(menu, /Panel administrativo/);
+  assert.match(admin, /Rendimiento del proyecto/);
+  assert.match(admin, /chartType/);
+  assert.match(admin, /Suscripciones/);
+  assert.match(admin, /PaymentPeriod/);
+  assert.match(admin, /Esta semana/);
+  assert.match(admin, /Este mes/);
+  assert.doesNotMatch(admin, /Pendiente/);
+  assert.match(admin, /showAxis/);
+  assert.match(admin, /loadAdminData/);
+  assert.match(admin, /is_most_used/);
+  assert.match(admin, /AdminResourceDialog/);
+  assert.match(updates, /Actualizaciones/);
+  assert.match(updates, /expandedUpdateId/);
+  assert.doesNotMatch(updates, /readTime/);
+});
+
+test('los planes y promociones tienen reglas funcionales aplicables', async () => {
+  const adminData = await readProjectFile('src/lib/adminData.ts');
+  const dialog = await readProjectFile('src/components/AdminResourceDialog.tsx');
+  const services = await readProjectFile('src/lib/services.ts');
+  const migration = await readProjectFile('supabase/migrations/20260925000000_add_plan_entitlements_and_promotion_rules.sql');
+  assert.match(adminData, /PlanEntitlements/);
+  assert.match(adminData, /getPlanFeatureLabels/);
+  assert.match(dialog, /Servicios publicados/);
+  assert.match(dialog, /Beneficio funcional/);
+  assert.match(services, /get_effective_plan_entitlements/);
+  assert.match(migration, /provider_promotions/);
+  assert.match(migration, /enforce_service_plan_limit/);
+});
+
 test('el inicio usa el catálogo real y no datos simulados', async () => {
   const home = await readProjectFile('src/pages/Inicio.tsx');
   const card = await readProjectFile('src/components/ServiceCard.tsx');
@@ -82,6 +123,43 @@ test('el inicio usa el catálogo real y no datos simulados', async () => {
   assert.doesNotMatch(home, /data\/services/);
   assert.doesNotMatch(card, /Reparaciones · Limpieza/);
   assert.doesNotMatch(filters, /data\/services/);
+});
+
+test('los favoritos reemplazan las calificaciones y se guardan por usuario', async () => {
+  const card = await readProjectFile('src/components/ServiceCard.tsx');
+  const services = await readProjectFile('src/lib/services.ts');
+  const favoritesPage = await readProjectFile('src/pages/Favoritos.tsx');
+  const app = await readProjectFile('src/App.tsx');
+  const menu = await readProjectFile('src/components/Menu.tsx');
+  const migration = await readProjectFile('supabase/migrations/20260927000000_create_service_favorites.sql');
+  assert.match(card, /Heart/);
+  assert.doesNotMatch(card, /Calificación|service\.rating/);
+  assert.match(services, /service_favorites/);
+  assert.match(favoritesPage, /listFavoriteServices/);
+  assert.match(app, /#favoritos/);
+  assert.match(menu, />Favoritos<\/a>/);
+  assert.match(migration, /unique \(user_id, service_id\)/);
+  assert.match(migration, /enable row level security/);
+});
+
+test('los documentos legales son públicos y el registro exige aceptación', async () => {
+  const app = await readProjectFile('src/App.tsx');
+  const footer = await readProjectFile('src/components/Footer.tsx');
+  const authPage = await readProjectFile('src/components/AuthPage.tsx');
+  const terms = await readProjectFile('src/pages/Terminos.tsx');
+  const privacy = await readProjectFile('src/pages/PoliticaPrivacidad.tsx');
+  const migration = await readProjectFile('supabase/migrations/20260928000000_store_legal_acceptance.sql');
+  assert.match(app, /#terminos/);
+  assert.match(app, /#politica-privacidad/);
+  assert.match(footer, /Términos y condiciones/);
+  assert.match(footer, /Política de privacidad/);
+  assert.match(authPage, /acceptedTerms/);
+  assert.match(authPage, /required onChange/);
+  assert.match(authPage, /terms_accepted_at/);
+  assert.match(terms, /Términos y condiciones/);
+  assert.match(privacy, /Política de privacidad/);
+  assert.match(migration, /terms_accepted_at/);
+  assert.match(migration, /privacy_policy_version/);
 });
 
 test('el documento no fuerza un ancho mínimo incompatible con móviles pequeños', async () => {
@@ -97,9 +175,9 @@ test('la información comercial está disponible en una página pública', async
   const plansData = await readProjectFile('src/pages/planes.data.ts');
   assert.match(app, /#planes/);
   assert.match(menu, /Planes/);
-  assert.match(plansData, /Publicaciones de servicios sin costo/);
+  assert.match(plansData, /Hasta 1 publicación/);
   assert.match(plansData, /B\/\.1\.00/);
-  assert.match(plansData, /Promoción de lanzamiento/);
+  assert.doesNotMatch(plansData, /Promoción de lanzamiento/);
   assert.match(plans, /Promociones/);
   assert.match(plans, /por servicio seleccionado/);
 });
@@ -151,6 +229,8 @@ test('el chat unifica conversaciones y conserva solicitudes de servicio', async 
   assert.match(chatPage, /alreadyRequested/);
   assert.match(chatLib, /SERVICE_REQUEST_MESSAGE/);
   assert.match(chatLib, /serviceId = conversation\.service_id/);
+  assert.match(chatLib, /subscribeToChatNotifications/);
+  assert.match(menu, /unreadMessages/);
   assert.match(servicePage, /Solicitar servicio/);
   assert.match(menu, /Abrir chats/);
 });

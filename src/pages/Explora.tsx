@@ -4,11 +4,12 @@ import { useAuth } from '../auth/useAuth';
 import { Button } from '../components/Button';
 import { ExploreFilters } from '../components/ExploreFilters';
 import { ServiceCard } from '../components/ServiceCard';
-import { getServiceCoverImages, listCategories, listPublicServices } from '../lib/services';
+import { getServiceCoverImages, listCategories, listFavoriteServiceIds, listPublicServices, setServiceFavorite } from '../lib/services';
 import type { PublicService, ServiceCardData } from '../types/service';
 
 type ServiceLayout = 'list' | 'grid';
 const SERVICE_LAYOUT_STORAGE_KEY = 'conectautp-service-layout';
+const EMPTY_FAVORITES = new Set<string>();
 
 function toCard(service: PublicService, canView: boolean, userId?: string): ServiceCardData {
   return {
@@ -16,7 +17,6 @@ function toCard(service: PublicService, canView: boolean, userId?: string): Serv
     title: service.title,
     provider: service.provider_name,
     price: service.price === null ? 'Precio por definir' : `Desde B/.${service.price}`,
-    rating: service.rating.toFixed(1),
     category: service.category_name,
     description: service.description,
     imageUrl: service.cover_image_url,
@@ -34,6 +34,8 @@ export function Explora() {
   const [services, setServices] = useState<PublicService[]>([]);
   const [categoryNames, setCategoryNames] = useState<string[]>([]);
   const [message, setMessage] = useState('');
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(() => new Set());
+  const [favoriteOwnerId, setFavoriteOwnerId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [layout, setLayout] = useState<ServiceLayout>(() => {
     if (typeof window === 'undefined') return 'list';
@@ -67,10 +69,48 @@ export function Explora() {
     return () => { active = false; };
   }, [session]);
 
+  useEffect(() => {
+    if (!session) return;
+
+    let active = true;
+    void listFavoriteServiceIds(session.user.id).then((result) => {
+      if (!active) return;
+      setFavoriteIds(result.data);
+      setFavoriteOwnerId(session.user.id);
+      if (result.error) setMessage('No se pudieron cargar tus favoritos.');
+    });
+    return () => { active = false; };
+  }, [session]);
+
+  async function toggleFavorite(serviceId: string) {
+    if (!session) {
+      window.location.assign('#login');
+      return;
+    }
+
+    const visibleFavoriteIds = favoriteOwnerId === session.user.id ? favoriteIds : EMPTY_FAVORITES;
+    const nextValue = !visibleFavoriteIds.has(serviceId);
+    setFavoriteIds((current) => {
+      const next = new Set(current);
+      if (nextValue) next.add(serviceId); else next.delete(serviceId);
+      return next;
+    });
+    const result = await setServiceFavorite(session.user.id, serviceId, nextValue);
+    if (result.error) {
+      setFavoriteIds((current) => {
+        const next = new Set(current);
+        if (nextValue) next.delete(serviceId); else next.add(serviceId);
+        return next;
+      });
+      setMessage('No se pudo actualizar el favorito.');
+    }
+  }
+
   const filteredServices = useMemo(() => services.filter((service) => service.title.toLowerCase().includes(query.toLowerCase()) && (!category || service.category_name === category)), [category, query, services]);
   const totalPages = Math.max(1, Math.ceil(filteredServices.length / servicesPerPage));
   const page = Math.min(currentPage, totalPages);
   const visibleServices = filteredServices.slice((page - 1) * servicesPerPage, page * servicesPerPage);
+  const visibleFavoriteIds = favoriteOwnerId === session?.user.id ? favoriteIds : EMPTY_FAVORITES;
 
   function changePage(nextPage: number) {
     setCurrentPage(nextPage);
@@ -80,7 +120,7 @@ export function Explora() {
   return (
     <>
       <section className="bg-linear-to-r from-white via-[#f5f4ff] to-[#e4dcff] py-10"><div className="mx-auto w-[calc(100%-48px)] max-w-7xl"><h1 className="text-3xl font-bold">Explora servicios</h1><p className="mt-2 text-sm">Encuentra personas de la comunidad UTP que pueden ayudarte.</p><div className="mt-4 flex gap-3 max-md:flex-col"><input className="h-11 w-[300px] rounded-md border border-[#d9d9df] bg-white px-4 text-sm max-md:w-full" placeholder="¿Qué estás buscando?" value={query} onChange={(event) => { setQuery(event.target.value); setCurrentPage(1); }} /><Button className="min-h-11 px-6 text-sm max-md:w-full">Buscar servicio</Button><Button variant="outline" className="min-h-11 px-5 text-sm max-md:w-full" onClick={() => { window.location.hash = '#publicar'; }}>＋ Publicar mi servicio</Button></div></div></section>
-      <section className="mx-auto grid w-[calc(100%-48px)] max-w-7xl grid-cols-[220px_1fr] gap-6 py-12 max-lg:grid-cols-1 max-md:py-8"><ExploreFilters selectedCategory={category} onCategoryChange={(nextCategory) => { setCategory(nextCategory); setCurrentPage(1); }} categories={categoryNames} /><div><div className="mb-4 flex flex-wrap items-end justify-between gap-4 max-sm:items-start"><div><h2 className="text-base font-semibold">Servicios encontrados</h2><p className="text-sm">{filteredServices.length} servicios</p></div><div className="flex items-center gap-1 rounded-lg border border-[#dedee8] bg-white p-1" aria-label="Cambiar vista"><button className={`inline-flex cursor-pointer items-center gap-1 rounded-md px-2.5 py-2 text-xs font-semibold transition-colors ${layout === 'list' ? 'bg-[#7b32ca] text-white' : 'text-[#5420a8] hover:bg-[#f4f1ff]'}`} type="button" onClick={() => setLayout('list')} aria-label="Ver servicios en lista" aria-pressed={layout === 'list'}><List aria-hidden="true" className="h-4 w-4" />Lista</button><button className={`inline-flex cursor-pointer items-center gap-1 rounded-md px-2.5 py-2 text-xs font-semibold transition-colors ${layout === 'grid' ? 'bg-[#7b32ca] text-white' : 'text-[#5420a8] hover:bg-[#f4f1ff]'}`} type="button" onClick={() => setLayout('grid')} aria-label="Ver servicios en cuadrícula" aria-pressed={layout === 'grid'}><Grid2X2 aria-hidden="true" className="h-4 w-4" />Cuadrícula</button></div></div>{message && <p className="mb-4 rounded bg-[#fff7df] p-4 text-sm text-[#735d22]">{message}</p>}<div className={layout === 'list' ? 'space-y-4' : 'grid grid-cols-3 gap-5 max-2xl:grid-cols-2 max-sm:grid-cols-1'}>{visibleServices.map((service) => <ServiceCard key={service.id} service={toCard(service, Boolean(session), session?.user.id)} layout={layout} href={`#servicio/${service.id}`} />)}</div>{!message && filteredServices.length === 0 && <p className="rounded-lg border border-slate-200 p-5 text-sm text-[#676878]">No hay servicios publicados todavía.</p>}{filteredServices.length > 0 && <Pagination currentPage={page} totalPages={totalPages} onPageChange={changePage} />}</div></section>
+      <section className="mx-auto grid w-[calc(100%-48px)] max-w-7xl grid-cols-[220px_1fr] gap-6 py-12 max-lg:grid-cols-1 max-md:py-8"><ExploreFilters selectedCategory={category} onCategoryChange={(nextCategory) => { setCategory(nextCategory); setCurrentPage(1); }} categories={categoryNames} /><div><div className="mb-4 flex flex-wrap items-end justify-between gap-4 max-sm:items-start"><div><h2 className="text-base font-semibold">Servicios encontrados</h2><p className="text-sm">{filteredServices.length} servicios</p></div><div className="flex items-center gap-1 rounded-lg border border-[#dedee8] bg-white p-1" aria-label="Cambiar vista"><button className={`inline-flex cursor-pointer items-center gap-1 rounded-md px-2.5 py-2 text-xs font-semibold transition-colors ${layout === 'list' ? 'bg-[#7b32ca] text-white' : 'text-[#5420a8] hover:bg-[#f4f1ff]'}`} type="button" onClick={() => setLayout('list')} aria-label="Ver servicios en lista" aria-pressed={layout === 'list'}><List aria-hidden="true" className="h-4 w-4" />Lista</button><button className={`inline-flex cursor-pointer items-center gap-1 rounded-md px-2.5 py-2 text-xs font-semibold transition-colors ${layout === 'grid' ? 'bg-[#7b32ca] text-white' : 'text-[#5420a8] hover:bg-[#f4f1ff]'}`} type="button" onClick={() => setLayout('grid')} aria-label="Ver servicios en cuadrícula" aria-pressed={layout === 'grid'}><Grid2X2 aria-hidden="true" className="h-4 w-4" />Cuadrícula</button></div></div>{message && <p className="mb-4 rounded bg-[#fff7df] p-4 text-sm text-[#735d22]">{message}</p>}<div className={layout === 'list' ? 'space-y-4' : 'grid grid-cols-3 gap-5 max-2xl:grid-cols-2 max-sm:grid-cols-1'}>{visibleServices.map((service) => <ServiceCard key={service.id} service={toCard(service, Boolean(session), session?.user.id)} layout={layout} href={`#servicio/${service.id}`} isFavorite={visibleFavoriteIds.has(service.id)} onToggleFavorite={() => void toggleFavorite(service.id)} />)}</div>{!message && filteredServices.length === 0 && <p className="rounded-lg border border-slate-200 p-5 text-sm text-[#676878]">No hay servicios publicados todavía.</p>}{filteredServices.length > 0 && <Pagination currentPage={page} totalPages={totalPages} onPageChange={changePage} />}</div></section>
     </>
   );
 }

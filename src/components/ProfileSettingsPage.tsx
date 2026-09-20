@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
-import { CheckCircle2, CircleAlert, CircleX, Clock3, UserCircle2 } from 'lucide-react';
+import { UserCircle2 } from 'lucide-react';
 import { useAuth } from '../auth/useAuth';
 import { uploadProfileAvatar } from '../lib/profileImages';
 import { supabase } from '../lib/supabase';
@@ -34,15 +34,6 @@ export function ProfileSettingsPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const verificationStatus = profile?.institutional_email_status ?? 'not_added';
-  const verificationText = verificationStatus === 'verified'
-    ? 'Verificación institucional verificada'
-    : verificationStatus === 'rejected'
-      ? 'Verificación institucional rechazada'
-      : verificationStatus === 'pending'
-        ? 'Verificación institucional pendiente'
-        : 'Agrega tu correo institucional';
-  const VerificationIcon = verificationStatus === 'verified' ? CheckCircle2 : verificationStatus === 'rejected' ? CircleX : verificationStatus === 'pending' ? Clock3 : CircleAlert;
   const avatarUrl = avatarPreview ?? profile?.avatar_url ?? null;
 
   useEffect(() => () => {
@@ -158,7 +149,7 @@ export function ProfileSettingsPage() {
       <div className="mt-4 grid grid-cols-[minmax(0,1fr)_220px] gap-4 max-xl:grid-cols-1">
         <div>
           <div className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
-            <div className="flex items-center gap-3"><div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eef0f7] text-[#24304c]">{avatarUrl ? <img className="h-full w-full object-cover" src={avatarUrl} alt="Foto de perfil" /> : <UserCircle2 aria-hidden="true" className="h-8 w-8" />}</div><div><h2 className="text-base font-semibold">{[form.first_name, form.last_name].filter(Boolean).join(' ') || 'Tu nombre'}</h2><p className="text-sm text-[#676878]">@{form.username || 'username'}</p><span className="mt-1 inline-flex items-center gap-1 rounded bg-[#fff0c8] px-2 py-1 text-xs text-[#99751d]"><VerificationIcon aria-hidden="true" className="h-3.5 w-3.5" />{verificationText}</span></div></div>
+            <div className="flex items-center gap-3"><div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eef0f7] text-[#24304c]">{avatarUrl ? <img className="h-full w-full object-cover" src={avatarUrl} alt="Foto de perfil" /> : <UserCircle2 aria-hidden="true" className="h-8 w-8" />}</div><div><h2 className="text-base font-semibold">{[form.first_name, form.last_name].filter(Boolean).join(' ') || 'Tu nombre'}</h2><p className="text-sm text-[#676878]">@{form.username || 'username'}</p></div></div>
             <label className={`inline-flex min-h-10 cursor-pointer items-center rounded-md border border-[#7b32ca] px-4 text-sm text-[#7b32ca] ${isUploadingAvatar ? 'cursor-wait opacity-60' : ''}`}>
               {isUploadingAvatar ? 'Subiendo...' : 'Cambiar foto'}
               <input className="sr-only" type="file" accept="image/*" disabled={isUploadingAvatar} onChange={handleAvatarChange} />
@@ -169,7 +160,7 @@ export function ProfileSettingsPage() {
             <div className="mt-5 flex justify-end gap-3 border-t border-slate-100 pt-4"><Button variant="outline" type="button" className="text-sm" disabled={!isEditing || isSaving} onClick={() => { if (profile) setForm(profileToForm(profile)); setIsEditing(false); setMessage(''); }}>Cancelar</Button><Button type="submit" className="text-sm" disabled={!isEditing || isSaving}>{isSaving ? 'Guardando...' : 'Guardar cambios'}</Button></div>
           </form>
         </div>
-        <PublicProfilePreview value={form} verificationStatus={verificationStatus} avatarUrl={avatarUrl} />
+        <PublicProfilePreview value={form} avatarUrl={avatarUrl} />
       </div>
       {message && <p className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-[#eaf8ee] px-5 py-3 text-sm font-medium text-[#268044] shadow-lg" role="status" aria-live="polite">{message}</p>}
     </SettingsLayout>

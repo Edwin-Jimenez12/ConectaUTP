@@ -4,13 +4,13 @@ import { useAuth } from '../auth/useAuth';
 import { Button } from '../components/Button';
 import { ImageEditor } from '../components/ImageEditor';
 import { uploadServiceImages } from '../lib/imageUpload';
-import { createService, listCategories } from '../lib/services';
+import { createService, getEffectivePlanEntitlements, listCategories, listOwnerServices } from '../lib/services';
 import type { ServiceCategory } from '../lib/services';
 import type { ServiceModality, ServiceStatus } from '../types/service';
 
 const initialForm = {
   title: '', description: '', category_id: '', modality: 'both' as ServiceModality,
-  price: '', status: 'draft' as ServiceStatus, altTexts: [] as string[],
+  price: '', status: 'draft' as ServiceStatus,
 };
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
@@ -50,13 +50,11 @@ export function CrearServicio() {
     const addedFiles = nextFiles.slice(files.length);
     setFiles(nextFiles);
     setPreviewUrls([...previewUrls, ...addedFiles.map((file) => URL.createObjectURL(file))].slice(0, 5));
-    updateForm({ altTexts: [...form.altTexts, ...addedFiles.map(() => '')].slice(0, 5) });
   }
 
   function removeFile(index: number) {
     setFiles(files.filter((_, fileIndex) => fileIndex !== index));
     setPreviewUrls(previewUrls.filter((_, previewIndex) => previewIndex !== index));
-    updateForm({ altTexts: form.altTexts.filter((_, altIndex) => altIndex !== index) });
   }
 
   function saveAdjustedFile(file: File) {
@@ -76,6 +74,21 @@ export function CrearServicio() {
     setIsSaving(true);
     const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
     const status = (submitter?.value as ServiceStatus | undefined) ?? form.status;
+    if (status === 'published') {
+      const [entitlementsResult, servicesResult] = await Promise.all([
+        getEffectivePlanEntitlements(),
+        listOwnerServices(session.user.id),
+      ]);
+      if (!entitlementsResult.error && !servicesResult.error) {
+        const limit = Number(entitlementsResult.data?.max_published_services ?? 0);
+        const publishedCount = (servicesResult.data ?? []).filter((service) => service.status === 'published').length;
+        if (publishedCount >= limit) {
+          setMessage(`Tu plan permite ${limit} publicaciones. Activa un plan o una promoción para publicar otra.`);
+          setIsSaving(false);
+          return;
+        }
+      }
+    }
     const result = await createService({
       owner_id: session.user.id,
       category_id: form.category_id,
@@ -91,7 +104,7 @@ export function CrearServicio() {
       return;
     }
     try {
-      if (files.length) await uploadServiceImages(result.data.id, files, form.altTexts);
+      if (files.length) await uploadServiceImages(result.data.id, files);
       setMessage(status === 'published' ? 'Servicio publicado correctamente.' : 'Borrador guardado correctamente.');
       setForm(initialForm);
       setFiles([]);
@@ -116,7 +129,7 @@ export function CrearServicio() {
           <Field label="Precio desde"><input className={inputClass} type="number" min="0" step="0.01" value={form.price} onChange={(event) => updateForm({ price: event.target.value })} /></Field>
         </div>
         <Field label="Imágenes (máximo 5, 5 MB cada una)"><div className="mt-1 flex flex-wrap items-center gap-3"><label className="inline-flex min-h-10 cursor-pointer items-center rounded-md border border-slate-200 px-4 text-sm text-[#5420a8] hover:bg-[#f4f1ff]">{files.length ? '+ Agregar otra imagen' : 'Elegir imágenes'}<input className="sr-only" type="file" accept="image/*" multiple onChange={(event) => { selectFiles(event.target.files); event.target.value = ''; }} /></label><span className="text-xs text-[#676878]">{files.length}/5 seleccionadas</span></div></Field>
-        {files.length > 0 && <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{files.map((file, index) => <figure className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50" key={`${file.name}-${file.lastModified}-${index}`}><img className="h-32 w-full bg-[#f4f1ff] object-contain" src={previewUrls[index]} alt={`Vista previa ${index + 1}`} /><figcaption className="truncate px-3 pt-2 text-xs text-slate-600">{file.name}</figcaption><div className="p-3"><label className="block text-xs font-medium">Texto alternativo<input className={inputClass} required minLength={3} maxLength={150} placeholder="Describe esta imagen" value={form.altTexts[index] ?? ''} onChange={(event) => updateForm({ altTexts: form.altTexts.map((altText, altIndex) => altIndex === index ? event.target.value : altText) })} /></label><div className="mt-2 flex items-center justify-between gap-3"><button className="cursor-pointer text-xs font-semibold text-[#7b32ca] hover:underline" type="button" onClick={() => setEditingIndex(index)}>Ajustar imagen</button><button className="cursor-pointer text-xs font-semibold text-red-600 hover:underline" type="button" onClick={() => removeFile(index)}>Quitar imagen</button></div></div></figure>)}</div>}
+        {files.length > 0 && <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{files.map((file, index) => <figure className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50" key={`${file.name}-${file.lastModified}-${index}`}><img className="h-32 w-full bg-[#f4f1ff] object-contain" src={previewUrls[index]} alt={`Vista previa ${index + 1}`} /><figcaption className="truncate px-3 pt-2 text-xs text-slate-600">{file.name}</figcaption><div className="p-3"><div className="mt-2 flex items-center justify-between gap-3"><button className="cursor-pointer text-xs font-semibold text-[#7b32ca] hover:underline" type="button" onClick={() => setEditingIndex(index)}>Ajustar imagen</button><button className="cursor-pointer text-xs font-semibold text-red-600 hover:underline" type="button" onClick={() => removeFile(index)}>Quitar imagen</button></div></div></figure>)}</div>}
         <div className="flex flex-wrap gap-3 border-t border-slate-100 pt-4"><Button variant="outline" type="submit" value="draft" disabled={isSaving}>Guardar borrador</Button><Button type="submit" value="published" disabled={isSaving}>{isSaving ? 'Guardando...' : 'Publicar servicio'}</Button></div>
         {message && <p className="rounded-md bg-[#f0edff] p-3 text-xs text-[#6040b5]">{message}</p>}
       </form>

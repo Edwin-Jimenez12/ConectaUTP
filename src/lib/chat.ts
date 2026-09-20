@@ -112,6 +112,17 @@ export function subscribeToChat(conversationId: string, onChange: () => void) {
   return () => { void supabase.removeChannel(channel); };
 }
 
+export function subscribeToChatNotifications(userId: string, onChange: () => void) {
+  const channel = supabase
+    .channel(`chat-notifications-${userId}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'service_messages' }, (payload) => {
+      const message = payload.new as Partial<ChatMessage>;
+      if (message.sender_id && message.sender_id !== userId) onChange();
+    })
+    .subscribe();
+  return () => { void supabase.removeChannel(channel); };
+}
+
 export function profileDisplayName(profile: ChatProfile | null) {
   if (!profile) return 'Usuario';
   return [profile.first_name, profile.last_name].filter(Boolean).join(' ') || `@${profile.username ?? 'usuario'}`;

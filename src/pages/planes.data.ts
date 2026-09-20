@@ -5,10 +5,9 @@ export const plans = [
     period: 'siempre',
     description: 'Empieza sin costo y prueba la plataforma.',
     features: [
-      'Publicaciones de servicios sin costo (hasta 3)',
+      'Hasta 1 publicación',
       'Perfil público',
       'Contacto con clientes',
-      'Verificación UTP gratuita',
     ],
     featured: false,
   },
@@ -18,7 +17,7 @@ export const plans = [
     period: 'por mes',
     description: 'Más espacio para ofrecer tus habilidades.',
     features: [
-      'Hasta 6 servicios publicados',
+      'Hasta 6 publicaciones',
       '1 destacada de 3 días al mes',
       'Perfil con mayor visibilidad',
       
@@ -31,7 +30,7 @@ export const plans = [
     period: 'por mes',
     description: 'Para quienes ya reciben solicitudes con frecuencia.',
     features: [
-      'Hasta 12 servicios publicados',
+      'Hasta 12 publicaciones',
       '2 destacadas de 7 días al mes',
       'Prioridad en resultados',
       
@@ -44,7 +43,7 @@ export const plans = [
     period: 'por mes',
     description: 'Más publicaciones y visibilidad para crecer.',
     features: [
-      'Hasta 25 servicios publicados',
+      'Hasta 25 publicaciones',
       '4 destacadas de 7 días al mes',
       'Perfil destacado en el catálogo',
       
@@ -58,18 +57,18 @@ export const boosts = [
     name: 'Impulso básico',
     duration: '3 días',
     price: 'B/.0.99',
-    badge: undefined,
+    benefit: '1 servicio destacado',
   },
   {
     name: 'Impulso estándar',
     duration: '7 días',
     price: 'B/.1.00',
-    badge: 'Promoción de lanzamiento',
+    benefit: '1 servicio destacado',
   },
   {
     name: 'Impulso mensual',
     duration: '30 días',
     price: 'B/.3.99',
-    badge: undefined,
+    benefit: '1 servicio destacado',
   },
 ] as const;

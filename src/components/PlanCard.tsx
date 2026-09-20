@@ -1,8 +1,16 @@
 import { Check } from 'lucide-react';
 import { Button } from './Button';
-import { plans } from '../pages/planes.data';
 
-export function PlanCard({ plan }: { plan: (typeof plans)[number] }) {
+export interface PlanCardData {
+  name: string;
+  price: string;
+  period: string;
+  description: string;
+  features: readonly string[];
+  featured: boolean;
+}
+
+export function PlanCard({ plan }: { plan: PlanCardData }) {
   const cardClass = plan.featured
     ? 'border-[#7b32ca] bg-[#faf8ff] shadow-[0_12px_30px_rgba(123,50,202,0.12)]'
     : 'border-slate-200 bg-white';
@@ -13,7 +21,7 @@ export function PlanCard({ plan }: { plan: (typeof plans)[number] }) {
     >
       {plan.featured && (
         <span className="absolute -top-3 left-5 rounded-full bg-[#7b32ca] px-3 py-1 text-xs font-semibold text-white">
-          Más elegido
+          Más usado
         </span>
       )}
 

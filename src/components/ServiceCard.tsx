@@ -1,4 +1,4 @@
-import { LockKeyhole, Star } from 'lucide-react';
+import { Heart, LockKeyhole, Star } from 'lucide-react';
 import type { ServiceCardData } from '../types/service';
 
 interface ServiceCardProps {
@@ -6,11 +6,13 @@ interface ServiceCardProps {
   featured?: boolean;
   href?: string;
   layout?: 'list' | 'grid';
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
 }
 
-export function ServiceCard({ service, featured = false, href, layout = 'grid' }: ServiceCardProps) {
+export function ServiceCard({ service, featured = false, href, layout = 'grid', isFavorite = false, onToggleFavorite }: ServiceCardProps) {
   const isList = layout === 'list';
-  const ratingBadge = <span className={`inline-flex items-center gap-1 font-semibold text-[#6f45bd] ${isList ? 'text-sm' : 'text-xs'}`} aria-label={`Calificación ${service.rating}`}><Star aria-hidden="true" className={`${isList ? 'h-4 w-4' : 'h-3.5 w-3.5'} fill-current`} />{service.rating}</span>;
+  const favoriteButton = onToggleFavorite ? <button className={`inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full p-2 transition-colors focus-visible:outline-2 focus-visible:outline-[#7b32ca] ${isFavorite ? 'text-[#7b32ca] drop-shadow-[0_0_7px_rgba(123,50,202,0.65)]' : 'text-[#8b8b99] hover:text-[#7b32ca]'}`} type="button" onClick={onToggleFavorite} aria-label={isFavorite ? `Quitar ${service.title} de favoritos` : `Agregar ${service.title} a favoritos`} aria-pressed={isFavorite}><Heart aria-hidden="true" className={`${isList ? 'h-5 w-5' : 'h-4 w-4'} ${isFavorite ? 'fill-current' : ''}`} /></button> : null;
   const providerBlock = <a className="flex min-w-0 items-start gap-3 focus-visible:outline-2 focus-visible:outline-[#7b32ca]" href={href}>
     {service.providerImageUrl ? <img className={`${isList ? 'h-14 w-14' : 'h-8 w-8'} shrink-0 rounded-full object-cover`} src={service.providerImageUrl} alt="" /> : <span className={`${isList ? 'h-14 w-14' : 'h-8 w-8'} shrink-0 rounded-full bg-linear-to-br from-[#454545] to-[#aaa]`} aria-hidden="true" />}
     <div className="min-w-0">
@@ -38,7 +40,7 @@ export function ServiceCard({ service, featured = false, href, layout = 'grid' }
         )}
       </a>
       <div className={`${isList ? 'flex min-w-0 flex-1 flex-col p-5' : 'p-3'} pb-4`}>
-        {isList ? <div className="mb-5 flex items-start justify-between gap-5">{providerBlock}{ratingBadge}</div> : <><div className="mb-3 flex items-center justify-between gap-2">{ratingBadge}</div>{providerBlock}</>}
+        {isList ? <div className="mb-5 flex items-start justify-between gap-5">{providerBlock}{favoriteButton}</div> : <><div className="mb-3 flex justify-end">{favoriteButton}</div>{providerBlock}</>}
         <div className={`${isList ? 'mt-auto pt-4 text-sm' : 'mt-4 text-xs'} flex items-center justify-between gap-2`}>
           <span className="font-medium text-[#7b32ca]">{service.price}</span>
           {service.requestHref && <button className={`cursor-pointer rounded-md bg-[#7b32ca] font-semibold text-white transition-colors hover:bg-[#6422b0] ${isList ? 'px-4 py-2.5 text-sm' : 'px-3 py-2 text-[11px]'}`} type="button" onClick={() => { window.location.hash = service.requestHref ?? ''; }}>Solicitar servicio</button>}

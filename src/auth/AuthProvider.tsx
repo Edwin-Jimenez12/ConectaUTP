@@ -12,6 +12,7 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -21,20 +22,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (isMounted) {
         setSession(data.session);
         setProfile(null);
-        setIsLoading(false);
+        setIsLoading(Boolean(data.session));
       }
     });
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (_event, nextSession) => {
         setSession(nextSession);
+        setIsAdmin(false);
         setProfile((currentProfile) => {
           if (nextSession && currentProfile?.id === nextSession.user.id) {
             return currentProfile;
           }
           return null;
         });
-        setIsLoading(false);
+        setIsLoading(Boolean(nextSession));
       },
     );
 
@@ -62,6 +64,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, [session]);
 
+  useEffect(() => {
+    if (!session) {
+      return;
+    }
+
+    let isActive = true;
+    void supabase
+      .from('admin_users')
+      .select('role')
+      .eq('user_id', session.user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (isActive) {
+          setIsAdmin(data?.role === 'admin');
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [session]);
+
   async function signOut() {
     await supabase.auth.signOut();
     setProfile(null);
@@ -73,6 +98,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       value={{
         session,
         profile,
+        isAdmin,
         isLoading,
         signOut,
         updateProfile: setProfile,
