@@ -22,16 +22,24 @@ import { AdminPanel } from './pages/AdminPanel';
 import { Favoritos } from './pages/Favoritos';
 import { Terminos } from './pages/Terminos';
 import { PoliticaPrivacidad } from './pages/PoliticaPrivacidad';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { supabase } from './lib/supabase';
+
+function getRouteHash() {
+  const hash = window.location.hash;
+  const isRecoveryRedirect = new URLSearchParams(window.location.search).get('recovery') === '1';
+  return isRecoveryRedirect || hash.includes('type=recovery') || hash.includes('access_token=') ? '#restablecer-contrasena' : hash || '#inicio';
+}
 
 function App() {
   const { session, isAdmin, isLoading } = useAuth();
-  const [currentPage, setCurrentPage] = useState(window.location.hash || '#inicio');
+  const [currentPage, setCurrentPage] = useState(getRouteHash);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => window.localStorage.getItem('conecta-theme') === 'dark' ? 'dark' : 'light');
   const hasResolvedInitialSession = useRef(false);
 
   useEffect(() => {
     const handleHashChange = () => {
-      setCurrentPage(window.location.hash || '#inicio');
+      setCurrentPage(getRouteHash());
       window.requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' }));
     };
     handleHashChange();
@@ -39,7 +47,17 @@ function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const isExplorePage = currentPage === '#explorar';
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setCurrentPage('#restablecer-contrasena');
+        window.history.replaceState(null, '', '#restablecer-contrasena');
+      }
+    });
+    return () => authListener.subscription.unsubscribe();
+  }, []);
+
+  const isExplorePage = currentPage === '#explorar' || currentPage.startsWith('#explorar?');
   const isAboutPage = currentPage === '#nosotros';
   const isContactPage = currentPage === '#contactanos';
   const isPlansPage = currentPage === '#planes';
@@ -53,6 +71,8 @@ function App() {
   const isAccountPage = currentPage === '#mi-cuenta';
   const isLoginPage = currentPage === '#login';
   const isRegisterPage = currentPage === '#registro';
+  const isForgotPasswordPage = currentPage === '#recuperar-contrasena';
+  const isResetPasswordPage = currentPage === '#restablecer-contrasena';
   const isCreateServicePage = currentPage === '#publicar';
   const isManageServicesPage = currentPage === '#mis-servicios';
   const isFavoritesPage = currentPage === '#favoritos';
@@ -103,6 +123,10 @@ function App() {
           <AuthPage mode="login" theme={theme} />
         ) : isRegisterPage ? (
           <AuthPage mode="register" theme={theme} />
+        ) : isForgotPasswordPage ? (
+          <AuthPage mode="forgot" theme={theme} />
+        ) : isResetPasswordPage ? (
+          <ResetPasswordPage theme={theme} />
         ) : isLoading ? (
           <div className="flex min-h-[560px] items-center justify-center text-sm text-[#676878]">Cargando sesión...</div>
         ) : isProtectedPage && !session ? (

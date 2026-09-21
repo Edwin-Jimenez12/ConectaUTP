@@ -25,6 +25,11 @@ export interface PublicService extends Pick<DatabaseService, 'id' | 'owner_id' |
   provider_avatar_url?: string | null;
   cover_image_url?: string;
   cover_image_alt?: string;
+  is_featured?: boolean;
+  featured_priority?: number;
+  priority_results_enabled?: boolean;
+  contact_clients_enabled?: boolean;
+  profile_boost_enabled?: boolean;
 }
 
 export interface ServiceCardData {

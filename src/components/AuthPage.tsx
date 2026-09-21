@@ -8,12 +8,13 @@ import { hasAdminRole } from '../lib/admin';
 import { LEGAL_VERSION } from '../lib/legal';
 
 interface AuthPageProps {
-  mode: 'login' | 'register';
+  mode: 'login' | 'register' | 'forgot';
   theme: 'light' | 'dark';
 }
 
 export function AuthPage({ mode, theme }: AuthPageProps) {
   const isRegister = mode === 'register';
+  const isForgot = mode === 'forgot';
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
@@ -30,6 +31,14 @@ export function AuthPage({ mode, theme }: AuthPageProps) {
     setIsLoading(true);
 
     try {
+      if (isForgot) {
+        const redirectUrl = new URL(window.location.origin);
+        redirectUrl.searchParams.set('recovery', '1');
+        const { error } = await supabase.auth.resetPasswordForEmail(identifier, { redirectTo: redirectUrl.toString() });
+        setMessage(error ? error.message : 'Si existe una cuenta con ese correo, recibirás un enlace para restablecer la contraseña.');
+        return;
+      }
+
       const result = isRegister
         ? await supabase.auth.signUp({
             email: identifier,
@@ -69,15 +78,16 @@ export function AuthPage({ mode, theme }: AuthPageProps) {
   return (
     <section className="flex min-h-[560px] items-center justify-center bg-linear-to-br from-[#f8f7ff] to-[#e9e4ff] px-4 py-10">
       <form className="w-full max-w-[400px] rounded-xl border border-slate-200 bg-white p-7 shadow-[0_8px_30px_rgba(61,68,218,0.1)]" onSubmit={handleSubmit}>
-        <div className="text-center"><img className="mx-auto h-10 w-auto" src={theme === 'dark' ? '/LogoBlanco.svg' : '/LogoCompleto.svg'} alt="ConectaUTP" /><h1 className="mt-5 text-3xl font-semibold">{isRegister ? 'Crea tu cuenta' : 'Bienvenido de nuevo'}</h1><p className="mt-2 text-sm text-[#676878]">{isRegister ? 'Únete a la comunidad UTP y comparte tu talento.' : 'Ingresa para continuar en ConectaUTP.'}</p></div>
+        <div className="text-center"><img className="mx-auto h-10 w-auto" src={theme === 'dark' ? '/LogoBlanco.svg' : '/LogoCompleto.svg'} alt="ConectaUTP" /><h1 className="mt-5 text-3xl font-semibold">{isRegister ? 'Crea tu cuenta' : isForgot ? 'Recupera tu contraseña' : 'Bienvenido de nuevo'}</h1><p className="mt-2 text-sm text-[#676878]">{isRegister ? 'Únete a la comunidad UTP y comparte tu talento.' : isForgot ? 'Te enviaremos un enlace para crear una nueva contraseña.' : 'Ingresa para continuar en ConectaUTP.'}</p></div>
         {isRegister && <div className="mt-6 grid grid-cols-2 gap-3 max-sm:grid-cols-1"><AuthField label="Nombre" value={firstName} onChange={setFirstName} /><AuthField label="Apellido" value={lastName} onChange={setLastName} /></div>}
         {isRegister && <AuthField className="mt-4" label="Nombre de usuario" value={username} onChange={updateUsername} placeholder="ejemplo_01" />}
-        <AuthField className="mt-4" label={isRegister ? 'Correo electrónico' : 'Correo o nombre de usuario'} type={isRegister ? 'email' : 'text'} value={identifier} onChange={setIdentifier} required />
-        <PasswordField value={password} showPassword={showPassword} onChange={setPassword} onToggle={() => setShowPassword(!showPassword)} />
+        <AuthField className="mt-4" label={isRegister || isForgot ? 'Correo electrónico' : 'Correo o nombre de usuario'} type={isRegister || isForgot ? 'email' : 'text'} value={identifier} onChange={setIdentifier} required />
+        {!isForgot && <PasswordField value={password} showPassword={showPassword} onChange={setPassword} onToggle={() => setShowPassword(!showPassword)} />}
         {isRegister && <label className="mt-5 flex items-start gap-3 text-xs leading-5 text-[#676878]"><input className="mt-1 h-4 w-4 shrink-0 accent-[#7b32ca]" type="checkbox" checked={acceptedTerms} required onChange={(event) => setAcceptedTerms(event.target.checked)} /><span>Acepto los <a className="font-semibold text-[#7b32ca] hover:underline" href="#terminos" target="_blank" rel="noreferrer">Términos y Condiciones</a> y he leído la <a className="font-semibold text-[#7b32ca] hover:underline" href="#politica-privacidad" target="_blank" rel="noreferrer">Política de Privacidad</a>.</span></label>}
+        {mode === 'login' && <a className="mt-4 block text-right text-xs font-semibold text-[#7b32ca] hover:underline" href="#recuperar-contrasena">¿Olvidaste tu contraseña?</a>}
         {message && <p className="mt-4 rounded-md bg-[#f0edff] p-3 text-sm text-[#6040b5]">{message}</p>}
-        <Button type="submit" className="mt-5 w-full" disabled={isLoading}>{isLoading ? 'Procesando...' : isRegister ? 'Crear cuenta' : 'Iniciar sesión'}</Button>
-        <p className="mt-5 text-center text-sm text-[#676878]">{isRegister ? '¿Ya tienes una cuenta?' : '¿Todavía no tienes una cuenta?'} <a className="font-semibold text-[#7b32ca]" href={isRegister ? '#login' : '#registro'}>{isRegister ? 'Inicia sesión' : 'Regístrate'}</a></p>
+        <Button type="submit" className="mt-5 w-full" disabled={isLoading}>{isLoading ? 'Procesando...' : isRegister ? 'Crear cuenta' : isForgot ? 'Enviar enlace' : 'Iniciar sesión'}</Button>
+        <p className="mt-5 text-center text-sm text-[#676878]">{isRegister ? '¿Ya tienes una cuenta?' : isForgot ? '¿Recordaste tu contraseña?' : '¿Todavía no tienes una cuenta?'} <a className="font-semibold text-[#7b32ca]" href={isRegister || isForgot ? '#login' : '#registro'}>{isRegister || isForgot ? 'Inicia sesión' : 'Regístrate'}</a></p>
       </form>
     </section>
   );

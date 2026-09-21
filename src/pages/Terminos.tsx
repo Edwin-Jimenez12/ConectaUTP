@@ -11,7 +11,7 @@ export function Terminos() {
       <p>Al crear una cuenta, navegar con una cuenta registrada o utilizar las funciones de ConectaUTP, aceptas estos Términos y Condiciones. Si no estás de acuerdo, no debes crear una cuenta ni utilizar las funciones que requieren registro.</p>
 
       <LegalSection number="1" title="Qué es ConectaUTP">
-        <p>ConectaUTP es una plataforma digital que permite a miembros de la comunidad UTP publicar servicios, descubrir publicaciones, comunicarse y organizar oportunidades de colaboración. ConectaUTP no es parte de los acuerdos que los usuarios celebren entre sí y no actúa como empleador, representante, intermediario laboral ni garante de los servicios publicados.</p>
+        <p>ConectaUTP es una plataforma digital que permite a miembros de la comunidad universitaria publicar servicios, descubrir publicaciones, comunicarse y organizar oportunidades de colaboración. ConectaUTP no es parte de los acuerdos que los usuarios celebren entre sí y no actúa como empleador, representante, intermediario laboral ni garante de los servicios publicados. Ni forma parte como herramienta de alguna isntitucion unversitaria, el nombre ConectaUTP es usado unicamente como referencia de la Universidad Tecnológica de Panamá.</p>
       </LegalSection>
 
       <LegalSection number="2" title="Registro y cuenta">

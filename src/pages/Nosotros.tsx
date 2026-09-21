@@ -49,7 +49,7 @@ export function Nosotros() {
         </div>
         <h2 className="my-6 text-center text-2xl font-semibold">Lo que nos guía</h2>
         <div className="grid grid-cols-3 gap-3 max-[600px]:grid-cols-1">{values.map((value) => <ValueCard key={value.title} {...value} />)}</div>
-        <section className="mt-5 flex items-center justify-between rounded-lg bg-linear-to-r from-[#6422d0] to-[#2671eb] px-7 py-5 text-white"><div><h2 className="text-xl font-semibold">Se parte de ConectaUTP</h2><p className="mt-1 text-sm">Encuentra una solución o comparte lo que sabes hacer.</p></div><div className="flex gap-3 max-md:flex-wrap max-md:justify-end"><Button variant="secondary" className="min-h-10 text-sm">Explorar servicios</Button><Button className="min-h-10 border border-white bg-transparent text-sm text-white">Publica tu servicio</Button></div></section>
+        <section className="mt-5 flex items-center justify-between rounded-lg bg-linear-to-r from-[#6422d0] to-[#2671eb] px-7 py-5 text-white"><div><h2 className="text-xl font-semibold">Se parte de ConectaUTP</h2><p className="mt-1 text-sm">Encuentra una solución o comparte lo que sabes hacer.</p></div><div className="flex gap-3 max-md:flex-wrap max-md:justify-end"><Button variant="secondary" className="min-h-10 text-sm" onClick={() => { window.location.hash = '#explorar'; }}>Explorar servicios</Button><Button className="min-h-10 border border-white bg-transparent text-sm text-white" onClick={() => { window.location.hash = '#publicar'; }}>Publica tu servicio</Button></div></section>
       </section>
     </>
   );

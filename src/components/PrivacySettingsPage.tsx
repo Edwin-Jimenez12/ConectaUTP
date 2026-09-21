@@ -78,7 +78,7 @@ export function PrivacySettingsPage() {
           <Toggle checked={form.show_location} label="Mostrar mi ubicación" onChange={() => setForm({ ...form, show_location: !form.show_location })} />
         </PrivacyRow>
         <PrivacyRow title="Mostrar mi correo electrónico" description="Tu correo permanecerá oculto para otros usuarios por seguridad.">
-          <Toggle checked={false} label="Correo oculto" onChange={() => undefined} />
+          <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-[#676878]">Siempre oculto</span>
         </PrivacyRow>
         <PrivacyRow title="Preferencia de identidad" description="Elige cómo quieres que aparezca tu nombre en las publicaciones.">
           <select className="h-11 rounded border border-slate-200 px-3 text-sm" value={form.identity_preference} onChange={(event) => setForm({ ...form, identity_preference: event.target.value as IdentityPreference })}>

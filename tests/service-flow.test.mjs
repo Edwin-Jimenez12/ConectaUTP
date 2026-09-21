@@ -32,6 +32,25 @@ test('la vista pública expone la descripción de los servicios', async () => {
   assert.match(migration, /services\.description/);
 });
 
+test('el catálogo relaciona publicaciones por categoría y prioriza destacados', async () => {
+  const services = await readProjectFile('src/lib/services.ts');
+  const detail = await readProjectFile('src/pages/ServicioPublico.tsx');
+  const home = await readProjectFile('src/pages/Inicio.tsx');
+  const explore = await readProjectFile('src/pages/Explora.tsx');
+  const migration = await readProjectFile('supabase/migrations/20260929000000_catalog_prioritization_and_featured_services.sql');
+  assert.match(services, /listRelatedPublicServices/);
+  assert.match(services, /category_id/);
+  assert.match(services, /order\('is_featured', \{ ascending: false \}\)/);
+  assert.match(detail, /Más publicaciones de \$\{service\.category_name\}/);
+  assert.match(detail, /Explora más servicios/);
+  assert.match(home, /is_featured/);
+  assert.match(explore, /query/);
+  assert.match(explore, /destacados primero/);
+  assert.match(migration, /is_featured boolean/);
+  assert.match(migration, /refresh_service_featured_state/);
+  assert.match(migration, /priority_results_enabled/);
+});
+
 test('el flujo de publicación usa estados y compresión antes de subir imágenes', async () => {
   const createPage = await readProjectFile('src/pages/CrearServicio.tsx');
   const uploadHelper = await readProjectFile('src/lib/imageUpload.ts');
@@ -160,6 +179,24 @@ test('los documentos legales son públicos y el registro exige aceptación', asy
   assert.match(privacy, /Política de privacidad/);
   assert.match(migration, /terms_accepted_at/);
   assert.match(migration, /privacy_policy_version/);
+});
+
+test('la recuperación y el cambio de contraseña usan Supabase de forma segura', async () => {
+  const authPage = await readProjectFile('src/components/AuthPage.tsx');
+  const resetPage = await readProjectFile('src/pages/ResetPasswordPage.tsx');
+  const security = await readProjectFile('src/components/SecuritySettingsPage.tsx');
+  const privacy = await readProjectFile('src/components/PrivacySettingsPage.tsx');
+  const app = await readProjectFile('src/App.tsx');
+  assert.match(authPage, /resetPasswordForEmail/);
+  assert.match(authPage, /searchParams\.set\('recovery', '1'\)/);
+  assert.match(resetPage, /updateUser\(\{ password \}\)/);
+  assert.match(security, /signInWithPassword/);
+  assert.match(security, /currentPassword/);
+  assert.match(privacy, /Siempre oculto/);
+  assert.match(app, /#recuperar-contrasena/);
+  assert.match(app, /#restablecer-contrasena/);
+  assert.match(app, /PASSWORD_RECOVERY/);
+  assert.match(app, /new URLSearchParams\(window\.location\.search\)\.get\('recovery'\)/);
 });
 
 test('el documento no fuerza un ancho mínimo incompatible con móviles pequeños', async () => {

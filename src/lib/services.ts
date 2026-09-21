@@ -60,6 +60,33 @@ export function getPublicService(serviceId: string) {
     .maybeSingle() as unknown as Promise<PostgrestSingleResponse<PublicService>>;
 }
 
+export async function listRelatedPublicServices(service: Pick<PublicService, 'id' | 'category_id'>) {
+  const result = await supabase
+    .from('public_services')
+    .select('*')
+    .eq('category_id', service.category_id)
+    .neq('id', service.id)
+    .order('is_featured', { ascending: false })
+    .order('featured_priority', { ascending: false })
+    .order('priority_results_enabled', { ascending: false })
+    .order('profile_boost_enabled', { ascending: false })
+    .order('created_at', { ascending: false });
+  return result as unknown as PostgrestSingleResponse<PublicService[]>;
+}
+
+export async function listExplorePublicServices(excludeId?: string) {
+  let query = supabase
+    .from('public_services')
+    .select('*')
+    .order('is_featured', { ascending: false })
+    .order('featured_priority', { ascending: false })
+    .order('priority_results_enabled', { ascending: false })
+    .order('profile_boost_enabled', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (excludeId) query = query.neq('id', excludeId);
+  return query as unknown as PostgrestSingleResponse<PublicService[]>;
+}
+
 export function getServiceImages(serviceId: string) {
   return supabase
     .from('service_images')
