@@ -7,3 +7,6 @@ verify_jwt = true
 
 [functions.send-feedback]
 verify_jwt = false
+
+[functions.yappy-payment]
+verify_jwt = false

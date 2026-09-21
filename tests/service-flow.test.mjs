@@ -51,6 +51,26 @@ test('el catálogo relaciona publicaciones por categoría y prioriza destacados'
   assert.match(migration, /priority_results_enabled/);
 });
 
+test('el pago de Yappy se procesa en backend y solo confirma pagos ejecutados', async () => {
+  const migration = await readProjectFile('supabase/migrations/20260930000000_create_yappy_payment_orders.sql');
+  const functionFile = await readProjectFile('supabase/functions/yappy-payment/index.ts');
+  const paymentButton = await readProjectFile('src/components/YappyPaymentButton.tsx');
+  const dialog = await readProjectFile('src/components/YappyCheckoutDialog.tsx');
+  const config = await readProjectFile('supabase/config.toml');
+  assert.match(migration, /provider_payment_orders/);
+  assert.match(migration, /status text not null default 'created'/);
+  assert.match(migration, /payment_order_id/);
+  assert.match(functionFile, /payments\/validate\/merchant/);
+  assert.match(functionFile, /payments\/payment-wc/);
+  assert.match(functionFile, /verifyHash/);
+  assert.match(functionFile, /status === 'E'/);
+  assert.match(functionFile, /status: 'confirmed'/);
+  assert.match(paymentButton, /bt-cdn\.yappy\.cloud/);
+  assert.match(paymentButton, /yappy-payment/);
+  assert.match(dialog, /Pago seguro/);
+  assert.match(config, /\[functions\.yappy-payment\]\s+verify_jwt = false/);
+});
+
 test('el flujo de publicación usa estados y compresión antes de subir imágenes', async () => {
   const createPage = await readProjectFile('src/pages/CrearServicio.tsx');
   const uploadHelper = await readProjectFile('src/lib/imageUpload.ts');

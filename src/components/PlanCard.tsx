@@ -2,12 +2,14 @@ import { Check } from 'lucide-react';
 import { Button } from './Button';
 
 export interface PlanCardData {
+  id?: string;
   name: string;
   price: string;
   period: string;
   description: string;
   features: readonly string[];
   featured: boolean;
+  onSelect?: () => void;
 }
 
 export function PlanCard({ plan }: { plan: PlanCardData }) {
@@ -46,10 +48,11 @@ export function PlanCard({ plan }: { plan: PlanCardData }) {
         variant={plan.featured ? 'primary' : 'outline'}
         className="mt-6 w-full"
         onClick={() => {
-          window.location.hash = '#registro';
+          if (plan.onSelect) plan.onSelect();
+          else window.location.hash = '#registro';
         }}
       >
-        {plan.name === 'Gratis' ? 'Comenzar gratis' : 'Crear cuenta'}
+        {plan.name === 'Gratis' ? 'Comenzar gratis' : 'Elegir plan'}
       </Button>
     </article>
   );

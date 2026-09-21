@@ -1,18 +1,23 @@
 import { useEffect, useState } from 'react';
 import { Button } from '../components/Button';
 import { PlanCard } from '../components/PlanCard';
+import { YappyCheckoutDialog, type YappyCheckout } from '../components/YappyCheckoutDialog';
 import { useAuth } from '../auth/useAuth';
 import { getPlanFeatureLabels, listPublicPlans, listPublicPromotions, type AdminPlan, type AdminPromotion } from '../lib/adminData';
+import { listOwnerServices } from '../lib/services';
+import type { DatabaseService } from '../types/service';
 import { boosts, plans } from './planes.data';
 
-function mapPlan(plan: AdminPlan) {
+function mapPlan(plan: AdminPlan, onSelect?: () => void) {
   return {
+    id: plan.id,
     name: plan.name,
     price: `B/.${Number(plan.price).toFixed(2)}`,
     period: plan.billing_period === 'free' ? 'siempre' : plan.billing_period === 'yearly' ? 'por año' : plan.billing_period === 'quarterly' ? 'por trimestre' : 'por mes',
     description: plan.description,
     features: getPlanFeatureLabels(plan),
     featured: plan.is_most_used,
+    onSelect,
   };
 }
 
@@ -21,10 +26,12 @@ function mapPromotion(promotion: AdminPromotion) {
     ? `${promotion.benefit_operation === 'add' ? '+' : ''}${promotion.benefit_value} servicio${promotion.benefit_value === 1 ? '' : 's'} publicado${promotion.benefit_value === 1 ? '' : 's'}`
     : `${promotion.benefit_value} servicio${promotion.benefit_value === 1 ? '' : 's'} destacado${promotion.benefit_value === 1 ? '' : 's'}`;
   return {
+    id: promotion.id,
     name: promotion.name,
     duration: `${promotion.duration_days} días`,
     price: `B/.${Number(promotion.price).toFixed(2)}`,
     benefit,
+    requiresService: promotion.benefit_key === 'featured_service',
   };
 }
 
@@ -32,6 +39,9 @@ export function Planes() {
   const { session } = useAuth();
   const [remotePlans, setRemotePlans] = useState<AdminPlan[]>([]);
   const [remotePromotions, setRemotePromotions] = useState<AdminPromotion[]>([]);
+  const [services, setServices] = useState<DatabaseService[]>([]);
+  const [checkout, setCheckout] = useState<YappyCheckout | null>(null);
+  const [selectedServiceId, setSelectedServiceId] = useState('');
 
   useEffect(() => {
     let isActive = true;
@@ -45,7 +55,14 @@ export function Planes() {
     };
   }, []);
 
-  const visiblePlans = remotePlans.length > 0 ? remotePlans.map(mapPlan) : plans;
+  useEffect(() => {
+    if (!session) {
+      return;
+    }
+    void listOwnerServices(session.user.id).then(({ data }) => setServices(data ?? []));
+  }, [session]);
+
+  const visiblePlans = remotePlans.length > 0 ? remotePlans.map((plan) => mapPlan(plan, session ? () => setCheckout({ type: 'plan', id: plan.id, name: plan.name, amount: Number(plan.price).toFixed(2) }) : undefined)) : plans;
   const visibleBoosts = remotePromotions.length > 0 ? remotePromotions.map(mapPromotion) : boosts;
 
   return (
@@ -109,11 +126,13 @@ export function Planes() {
                 <p className="mt-1 text-xs text-[#676878]">
                   por servicio seleccionado
                 </p>
+                {session && 'id' in boost && <Button className="mt-5 w-full" onClick={() => { setSelectedServiceId(''); setCheckout({ type: 'promotion', id: boost.id, name: boost.name, amount: boost.price.replace('B/.', ''), requiresService: boost.requiresService }); }}>Pagar con Yappy</Button>}
               </article>
             ))}
           </div>
         </div>
       </section>
+      {checkout && <YappyCheckoutDialog checkout={checkout} services={services} selectedServiceId={selectedServiceId} onServiceChange={setSelectedServiceId} onClose={() => setCheckout(null)} />}
 
       {!session && <section className="mx-auto grid w-[calc(100%-48px)] max-w-7xl gap-8 py-12">
         <aside className="rounded-2xl bg-linear-to-br from-[#5420a8] to-[#2671eb] p-7 text-white flex items-center justify-between max-md:flex-col max-md:items-start">

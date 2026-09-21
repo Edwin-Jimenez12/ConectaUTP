@@ -1,0 +1,12 @@
+import { X } from 'lucide-react';
+import { Button } from './Button';
+import { YappyPaymentButton } from './YappyPaymentButton';
+import type { DatabaseService } from '../types/service';
+
+export type YappyCheckout = { type: 'plan'; id: string; name: string; amount: string } | { type: 'promotion'; id: string; name: string; amount: string; requiresService: boolean };
+
+export function YappyCheckoutDialog({ checkout, services, selectedServiceId, onServiceChange, onClose }: { checkout: YappyCheckout; services: DatabaseService[]; selectedServiceId: string; onServiceChange: (serviceId: string) => void; onClose: () => void }) {
+  const isPromotion = checkout.type === 'promotion';
+  const serviceId = isPromotion && checkout.requiresService ? selectedServiceId : undefined;
+  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="yappy-dialog-title"><div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-wide text-[#7b32ca]">Pago seguro</p><h2 className="mt-1 text-xl font-semibold" id="yappy-dialog-title">{checkout.name}</h2><p className="mt-1 text-sm text-[#676878]">Total: B/.{checkout.amount}</p></div><button className="cursor-pointer rounded-md p-1 text-[#676878] hover:bg-slate-100" type="button" onClick={onClose} aria-label="Cerrar pago"><X aria-hidden="true" className="h-5 w-5" /></button></div>{isPromotion && checkout.requiresService && <label className="mt-5 block text-sm font-medium">Publicación a destacar<select className="mt-1 h-11 w-full rounded-md border border-slate-200 px-3 text-sm" value={selectedServiceId} onChange={(event) => onServiceChange(event.target.value)}><option value="">Selecciona una publicación</option>{services.filter((service) => service.status === 'published').map((service) => <option key={service.id} value={service.id}>{service.title}</option>)}</select></label>}<div className="mt-5 rounded-lg bg-[#f8f5ff] p-3 text-xs leading-5 text-[#6040b5]">El pago se confirma únicamente cuando Yappy envía la notificación ejecutada. No se registra como pendiente.</div><div className="mt-5"><YappyPaymentButton planId={checkout.type === 'plan' ? checkout.id : undefined} promotionId={checkout.type === 'promotion' ? checkout.id : undefined} serviceId={serviceId} onSuccess={onClose} /></div><Button className="mt-4 w-full" variant="outline" onClick={onClose}>Cancelar</Button></div></div>;
+}
