@@ -9,6 +9,14 @@ import type {
 } from '../types/service';
 import type { PlanEntitlements } from './adminData';
 
+export interface PlanFeaturedStatus {
+  monthly_limit: number;
+  used_count: number;
+  remaining_count: number;
+  duration_days: number;
+  period_end?: string;
+}
+
 export interface ServiceCategory {
   id: string;
   name: string;
@@ -37,6 +45,11 @@ export function listPublicServices() {
   return supabase
     .from('public_services')
     .select('*')
+    .order('is_featured', { ascending: false })
+    .order('is_interest_featured', { ascending: false })
+    .order('priority_results_enabled', { ascending: false })
+    .order('profile_boost_enabled', { ascending: false })
+    .order('interest_score', { ascending: false })
     .order('created_at', { ascending: false }) as unknown as Promise<PostgrestSingleResponse<PublicService[]>>;
 }
 
@@ -50,6 +63,41 @@ export function listOwnerServices(ownerId: string) {
 
 export function getEffectivePlanEntitlements() {
   return supabase.rpc('get_effective_plan_entitlements') as unknown as Promise<PostgrestSingleResponse<PlanEntitlements>>;
+}
+
+export function getPlanFeaturedStatus() {
+  return supabase.rpc('get_plan_featured_status') as unknown as Promise<PostgrestSingleResponse<PlanFeaturedStatus>>;
+}
+
+export function activatePlanFeaturedService(serviceId: string) {
+  return supabase.rpc('activate_plan_featured_service', { target_service_id: serviceId }) as unknown as Promise<PostgrestSingleResponse<{ service_id: string; ends_at: string; monthly_limit: number; used_count: number; remaining_count: number }>>;
+}
+
+export function listOwnerPlanFeaturedServices(ownerId: string) {
+  return supabase
+    .from('provider_plan_featured_services')
+    .select('service_id, ends_at, status')
+    .eq('provider_id', ownerId)
+    .eq('status', 'active')
+    .gt('ends_at', new Date().toISOString()) as unknown as Promise<PostgrestSingleResponse<Array<{ service_id: string; ends_at: string; status: string }>>>;
+}
+
+const VISITOR_KEY = 'conectautp-visitor-key';
+
+function getVisitorKey() {
+  if (typeof window === 'undefined') return 'server';
+  const existing = window.localStorage.getItem(VISITOR_KEY);
+  if (existing) return existing;
+  const next = crypto.randomUUID();
+  window.localStorage.setItem(VISITOR_KEY, next);
+  return next;
+}
+
+export function recordServiceView(serviceId: string) {
+  return supabase.rpc('record_service_view', {
+    target_service_id: serviceId,
+    visitor_key: getVisitorKey(),
+  });
 }
 
 export function getPublicService(serviceId: string) {
@@ -67,9 +115,11 @@ export async function listRelatedPublicServices(service: Pick<PublicService, 'id
     .eq('category_id', service.category_id)
     .neq('id', service.id)
     .order('is_featured', { ascending: false })
+    .order('is_interest_featured', { ascending: false })
     .order('featured_priority', { ascending: false })
     .order('priority_results_enabled', { ascending: false })
     .order('profile_boost_enabled', { ascending: false })
+    .order('interest_score', { ascending: false })
     .order('created_at', { ascending: false });
   return result as unknown as PostgrestSingleResponse<PublicService[]>;
 }
@@ -79,9 +129,11 @@ export async function listExplorePublicServices(excludeId?: string) {
     .from('public_services')
     .select('*')
     .order('is_featured', { ascending: false })
+    .order('is_interest_featured', { ascending: false })
     .order('featured_priority', { ascending: false })
     .order('priority_results_enabled', { ascending: false })
     .order('profile_boost_enabled', { ascending: false })
+    .order('interest_score', { ascending: false })
     .order('created_at', { ascending: false });
   if (excludeId) query = query.neq('id', excludeId);
   return query as unknown as PostgrestSingleResponse<PublicService[]>;

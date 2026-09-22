@@ -44,7 +44,7 @@ Deno.serve(async (request) => {
     return await createOrder(admin, userData.user.id, { planId: body.planId, promotionId: body.promotionId, serviceId: body.serviceId, aliasYappy });
   } catch (error) {
     console.error(error);
-    return json({ error: 'No se pudo iniciar el pago con Yappy.' }, 500);
+    return json({ error: error instanceof Error ? error.message : 'No se pudo iniciar el pago con Yappy.' }, 502);
   }
 });
 

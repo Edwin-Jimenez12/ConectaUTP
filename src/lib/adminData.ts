@@ -175,10 +175,13 @@ export async function listPublicPlans() {
 }
 
 export async function listPublicPromotions() {
+  const now = new Date().toISOString();
   const { data, error } = await supabase
     .from('platform_promotions')
     .select('*')
     .eq('is_active', true)
+    .lte('starts_at', now)
+    .gte('ends_at', now)
     .order('starts_at', { ascending: true });
   return { data: (data ?? []).map((promotion) => normalizePromotion(promotion as AdminPromotion)), error };
 }

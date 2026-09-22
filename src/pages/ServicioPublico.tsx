@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '../auth/useAuth';
 import { Button } from '../components/Button';
 import { ServiceCard } from '../components/ServiceCard';
-import { getPublicService, getServiceCoverImages, getServiceImages, listExplorePublicServices, listFavoriteServiceIds, listRelatedPublicServices, setServiceFavorite } from '../lib/services';
+import { getPublicService, getServiceCoverImages, getServiceImages, listExplorePublicServices, listFavoriteServiceIds, listRelatedPublicServices, recordServiceView, setServiceFavorite } from '../lib/services';
 import { supabase } from '../lib/supabase';
 import type { DatabaseService, PublicService, ServiceImage } from '../types/service';
 
@@ -34,6 +34,7 @@ export function ServicioPublico({ serviceId }: { serviceId: string }) {
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
+    void recordServiceView(serviceId);
     void getPublicService(serviceId).then(async ({ data }) => {
       setService(data);
       if (!data) return;
@@ -113,5 +114,5 @@ export function ServicioPublico({ serviceId }: { serviceId: string }) {
 }
 
 function RelatedServices({ title, services, session, userId, favoriteIds, onToggleFavorite, emptyMessage }: { title: string; services: PublicService[]; session: ReturnType<typeof useAuth>['session']; userId?: string; favoriteIds: Set<string>; onToggleFavorite: (serviceId: string) => void; emptyMessage: string }) {
-  return <section className="mt-10"><div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-2xl font-semibold">{title}</h2><p className="mt-1 text-sm text-[#676878]">{title.startsWith('Más') ? 'Publicaciones de la misma categoría.' : 'Servicios destacados y no destacados, priorizando los destacados.'}</p></div><Button variant="outline" onClick={() => { window.location.hash = '#explorar'; }}>Ver todos</Button></div>{services.length > 0 ? <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{services.slice(0, 6).map((item) => <ServiceCard key={item.id} service={toCard(item, Boolean(session), userId)} layout="grid" featured={Boolean(item.is_featured)} href={`#servicio/${item.id}`} isFavorite={favoriteIds.has(item.id)} onToggleFavorite={() => void onToggleFavorite(item.id)} />)}</div> : <p className="mt-4 rounded-lg border border-dashed border-slate-300 p-5 text-sm text-[#676878]">{emptyMessage}</p>}</section>;
+  return <section className="mt-10"><div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-2xl font-semibold">{title}</h2><p className="mt-1 text-sm text-[#676878]">{title.startsWith('Más') ? 'Publicaciones de la misma categoría.' : 'Servicios destacados y no destacados, priorizando los destacados.'}</p></div><Button variant="outline" onClick={() => { window.location.hash = '#explorar'; }}>Ver todos</Button></div>{services.length > 0 ? <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{services.slice(0, 6).map((item) => <ServiceCard key={item.id} service={toCard(item, Boolean(session), userId)} layout="grid" featured={Boolean(item.is_featured || item.is_interest_featured)} promoted={Boolean(item.is_promoted)} href={`#servicio/${item.id}`} isFavorite={favoriteIds.has(item.id)} onToggleFavorite={() => void onToggleFavorite(item.id)} />)}</div> : <p className="mt-4 rounded-lg border border-dashed border-slate-300 p-5 text-sm text-[#676878]">{emptyMessage}</p>}</section>;
 }

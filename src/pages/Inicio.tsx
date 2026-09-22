@@ -4,6 +4,7 @@ import { useAuth } from '../auth/useAuth';
 import { Button } from '../components/Button';
 import { ServiceCard } from '../components/ServiceCard';
 import { getServiceCoverImages, listFavoriteServiceIds, listPublicServices, setServiceFavorite } from '../lib/services';
+import { comparePublicServices, hasVisibleHighlight } from '../lib/serviceRanking';
 import type { PublicService, ServiceCardData } from '../types/service';
 
 const EMPTY_FAVORITES = new Set<string>();
@@ -145,9 +146,9 @@ function HorizontalServiceRow({ services, canView, userId, favoriteIds, onToggle
   return (
     <div className="relative">
       <div className="flex gap-[13px] overflow-x-hidden pb-3 pr-1" ref={rowRef}>
-        {visibleServices.map((service, index) => (
+        {visibleServices.map((service) => (
         <div className={`${featured ? 'w-[310px]' : 'w-[250px]'} shrink-0 max-sm:w-[82vw]`} key={service.id}>
-          <ServiceCard service={toCard(service, canView, userId)} layout="grid" featured={Boolean(service.is_featured) || (featured && index === 0 && !visibleServices.some((item) => item.is_featured))} href={`#servicio/${service.id}`} isFavorite={favoriteIds.has(service.id)} onToggleFavorite={() => onToggleFavorite(service.id)} />
+          <ServiceCard service={toCard(service, canView, userId)} layout="grid" featured={Boolean(service.is_featured || service.is_interest_featured)} promoted={Boolean(service.is_promoted)} href={`#servicio/${service.id}`} isFavorite={favoriteIds.has(service.id)} onToggleFavorite={() => onToggleFavorite(service.id)} />
         </div>
         ))}
       </div>
@@ -157,20 +158,33 @@ function HorizontalServiceRow({ services, canView, userId, favoriteIds, onToggle
   );
 }
 
+const CATEGORY_SECTIONS = [
+  { title: 'Desarrollo web', terms: ['desarrollo web'] },
+  { title: 'Diseño', terms: ['diseno'] },
+  { title: 'Fotografía', terms: ['fotografia'] },
+  { title: 'Marketing', terms: ['marketing'] },
+  { title: 'Tutorías', terms: ['tutoria', 'tutorias'] },
+] as const;
+
+function normalizeCategory(value: string) {
+  return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
 function ServicesSection({ services, canView, message, userId, favoriteIds, onToggleFavorite }: { services: PublicService[]; canView: boolean; message: string; userId?: string; favoriteIds: Set<string>; onToggleFavorite: (serviceId: string) => void }) {
-  const featured = [...services].sort((a, b) => Number(Boolean(b.is_featured)) - Number(Boolean(a.is_featured)) || Number(Boolean(b.priority_results_enabled)) - Number(Boolean(a.priority_results_enabled)) || Number(Boolean(b.profile_boost_enabled)) - Number(Boolean(a.profile_boost_enabled)) || (b.featured_priority ?? 0) - (a.featured_priority ?? 0) || b.created_at.localeCompare(a.created_at)).slice(0, 4);
+  const featured = services.filter(hasVisibleHighlight).sort(comparePublicServices).slice(0, 10);
+  const categorySections = CATEGORY_SECTIONS.map((category) => ({
+    ...category,
+    services: services.filter((service) => category.terms.some((term) => normalizeCategory(service.category_name).includes(term))),
+  })).filter((category) => category.services.length >= 5);
   return (
     <section className="mx-auto w-[calc(100%-48px)] max-w-7xl pb-12 pt-7 text-center" id="explorar">
       {message && <p className="mb-4 rounded bg-[#fff7df] p-4 text-left text-sm text-[#735d22]">{message}</p>}
-      <div className="text-left">
-        <h2 className="mb-2 text-2xl font-semibold">Servicios destacados</h2>
-        <p className="mb-3 text-sm text-[#676878]">Publicaciones recientes y relevantes de la comunidad.</p>
-        {featured.length > 0 ? <HorizontalServiceRow services={featured} canView={canView} userId={userId} favoriteIds={favoriteIds} onToggleFavorite={onToggleFavorite} featured /> : <p className="rounded-lg border border-slate-200 p-5 text-sm text-[#676878]">No hay servicios destacados todavía.</p>}
-      </div>
+      {featured.length >= 10 && <div className="text-left"><h2 className="mb-2 text-2xl font-semibold">Servicios destacados</h2><p className="mb-3 text-sm text-[#676878]">Publicaciones recientes y relevantes de la comunidad.</p><HorizontalServiceRow services={featured} canView={canView} userId={userId} favoriteIds={favoriteIds} onToggleFavorite={onToggleFavorite} featured /></div>}
       <div className="mt-8 text-left">
         <h2 className="mb-3 text-2xl font-semibold">Explora servicios</h2>
         {services.length > 0 ? <HorizontalServiceRow services={services} canView={canView} userId={userId} favoriteIds={favoriteIds} onToggleFavorite={onToggleFavorite} /> : !message && <p className="rounded-lg border border-slate-200 p-5 text-sm text-[#676878]">No hay servicios publicados todavía.</p>}
       </div>
+      {categorySections.map((category) => <div className="mt-8 text-left" key={category.title}><h2 className="mb-3 text-2xl font-semibold">{category.title}</h2><HorizontalServiceRow services={category.services} canView={canView} userId={userId} favoriteIds={favoriteIds} onToggleFavorite={onToggleFavorite} /></div>)}
     </section>
   );
 }

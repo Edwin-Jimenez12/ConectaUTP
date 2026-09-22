@@ -51,9 +51,9 @@ export function HorizontalServiceRow({ services, canView, userId, favoriteIds = 
   return (
     <div className="relative">
       <div className="flex gap-[13px] overflow-x-auto pb-3 pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" ref={rowRef}>
-        {visibleServices.map((service, index) => (
+        {visibleServices.map((service) => (
           <div className={`${featured ? 'w-[310px]' : 'w-[250px]'} shrink-0 max-sm:w-[82vw]`} key={service.id}>
-            <ServiceCard service={toCard(service, canView, userId)} layout="grid" featured={Boolean(service.is_featured) || (featured && index === 0 && !visibleServices.some((item) => item.is_featured))} href={`#servicio/${service.id}`} isFavorite={favoriteIds.has(service.id)} onToggleFavorite={() => onToggleFavorite(service.id)} />
+            <ServiceCard service={toCard(service, canView, userId)} layout="grid" featured={Boolean(service.is_featured || service.is_interest_featured)} promoted={Boolean(service.is_promoted)} href={`#servicio/${service.id}`} isFavorite={favoriteIds.has(service.id)} onToggleFavorite={() => onToggleFavorite(service.id)} />
           </div>
         ))}
       </div>

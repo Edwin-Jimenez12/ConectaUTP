@@ -4,13 +4,14 @@ import type { ServiceCardData } from '../types/service';
 interface ServiceCardProps {
   service: ServiceCardData;
   featured?: boolean;
+  promoted?: boolean;
   href?: string;
   layout?: 'list' | 'grid';
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
 }
 
-export function ServiceCard({ service, featured = false, href, layout = 'grid', isFavorite = false, onToggleFavorite }: ServiceCardProps) {
+export function ServiceCard({ service, featured = false, promoted = false, href, layout = 'grid', isFavorite = false, onToggleFavorite }: ServiceCardProps) {
   const isList = layout === 'list';
   const favoriteButton = onToggleFavorite ? <button className={`inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full p-2 transition-colors focus-visible:outline-2 focus-visible:outline-[#7b32ca] ${isFavorite ? 'text-[#7b32ca] drop-shadow-[0_0_7px_rgba(123,50,202,0.65)]' : 'text-[#8b8b99] hover:text-[#7b32ca]'}`} type="button" onClick={onToggleFavorite} aria-label={isFavorite ? `Quitar ${service.title} de favoritos` : `Agregar ${service.title} a favoritos`} aria-pressed={isFavorite}><Heart aria-hidden="true" className={`${isList ? 'h-5 w-5' : 'h-4 w-4'} ${isFavorite ? 'fill-current' : ''}`} /></button> : null;
   const providerBlock = <a className="flex min-w-0 items-start gap-3 focus-visible:outline-2 focus-visible:outline-[#7b32ca]" href={href}>
@@ -31,7 +32,7 @@ export function ServiceCard({ service, featured = false, href, layout = 'grid', 
         ) : (
           <div className="h-full w-full bg-linear-to-br from-[#d9c6b0] via-[#89715f] to-[#2e4058]" />
         )}
-        {featured && <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-sm bg-[#7b32ca] px-2 py-1 text-xs text-white"><Star aria-hidden="true" className="h-3 w-3 fill-current" />Destacada</span>}
+        {(featured || promoted) && <div className="absolute right-2 top-2 flex flex-col items-end gap-1">{featured && <span className="inline-flex items-center gap-1 rounded-sm bg-[#7b32ca] px-2 py-1 text-xs text-white"><Star aria-hidden="true" className="h-3 w-3 fill-current" />Destacada</span>}{promoted && <span className="inline-flex items-center rounded-sm bg-[#f59e0b] px-2 py-1 text-xs font-semibold text-[#432006]">Promoción</span>}</div>}
         {service.locked && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-center text-white backdrop-blur-[4px]">
             <LockKeyhole aria-hidden="true" className="h-5 w-5" />

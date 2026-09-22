@@ -26,6 +26,11 @@ export interface PublicService extends Pick<DatabaseService, 'id' | 'owner_id' |
   cover_image_url?: string;
   cover_image_alt?: string;
   is_featured?: boolean;
+  is_plan_featured?: boolean;
+  is_promoted?: boolean;
+  is_interest_featured?: boolean;
+  interest_score?: number;
+  plan_featured_until?: string | null;
   featured_priority?: number;
   priority_results_enabled?: boolean;
   contact_clients_enabled?: boolean;
