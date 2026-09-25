@@ -2,8 +2,6 @@ import type { PostgrestSingleResponse } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import type { ChatConversation, ChatConversationRow, ChatMessage, ChatProfile } from '../types/chat';
 
-export const SERVICE_REQUEST_MESSAGE = 'Hola, me interesa el servicio, ¿podría darme más información?';
-
 export async function searchChatUsers(query: string, currentUserId: string) {
   const safeQuery = query.trim().replace(/[%,()]/g, ' ');
   if (safeQuery.length < 2) return { data: [] as ChatProfile[], error: null };

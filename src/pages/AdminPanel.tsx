@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { BarChart3, BellRing, CalendarClock, CheckCircle2, CreditCard, FilePlus2, LayoutDashboard, Megaphone, Pencil, Plus, RefreshCw, Sparkles, UserRoundPlus, Users, WalletCards } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '../auth/useAuth';
@@ -9,6 +9,8 @@ import { loadAdminData, saveAdminPlan, saveAdminPromotion, saveAdminUpdate, setA
 
 type AdminSection = 'dashboard' | 'plans' | 'subscriptions' | 'promotions' | 'updates' | 'payments';
 type PaymentPeriod = 'week' | 'month' | 'year';
+const ADMIN_SECTION_STORAGE_KEY = 'conecta-admin-section';
+const ADMIN_SCROLL_STORAGE_KEY = 'conecta-admin-scroll-y';
 
 const navigation: Array<{ id: AdminSection; label: string; icon: LucideIcon }> = [
   { id: 'dashboard', label: 'Resumen', icon: LayoutDashboard },
@@ -19,9 +21,26 @@ const navigation: Array<{ id: AdminSection; label: string; icon: LucideIcon }> =
   { id: 'payments', label: 'Pagos', icon: CreditCard },
 ];
 
+function readAdminSection(): AdminSection {
+  try {
+    const savedSection = sessionStorage.getItem(ADMIN_SECTION_STORAGE_KEY);
+    return navigation.some(({ id }) => id === savedSection) ? savedSection as AdminSection : 'dashboard';
+  } catch {
+    return 'dashboard';
+  }
+}
+
+function saveAdminScrollPosition() {
+  try {
+    sessionStorage.setItem(ADMIN_SCROLL_STORAGE_KEY, String(window.scrollY));
+  } catch {
+    // The panel remains usable when browser storage is unavailable.
+  }
+}
+
 export function AdminPanel() {
   const { isAdmin, profile, session } = useAuth();
-  const [section, setSection] = useState<AdminSection>('dashboard');
+  const [section, setSection] = useState<AdminSection>(readAdminSection);
   const [chartType, setChartType] = useState<ChartType>('bar');
   const [metric, setMetric] = useState<'users' | 'revenue'>('users');
   const [paymentPeriod, setPaymentPeriod] = useState<PaymentPeriod>('month');
@@ -31,7 +50,50 @@ export function AdminPanel() {
   const [dataError, setDataError] = useState('');
   const [editor, setEditor] = useState<AdminEditor | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const hasRestoredScroll = useRef(false);
   const adminName = profile?.first_name || 'Administrador';
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(ADMIN_SECTION_STORAGE_KEY, section);
+    } catch {
+      // Keep section navigation functional when browser storage is unavailable.
+    }
+  }, [section]);
+
+  useEffect(() => {
+    let saveTimer = 0;
+    const handleScroll = () => {
+      window.clearTimeout(saveTimer);
+      saveTimer = window.setTimeout(saveAdminScrollPosition, 120);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('pagehide', saveAdminScrollPosition);
+    window.addEventListener('beforeunload', saveAdminScrollPosition);
+    return () => {
+      window.clearTimeout(saveTimer);
+      saveAdminScrollPosition();
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('pagehide', saveAdminScrollPosition);
+      window.removeEventListener('beforeunload', saveAdminScrollPosition);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isDataLoading || hasRestoredScroll.current) return;
+
+    let savedScrollY = 0;
+    try {
+      savedScrollY = Number(sessionStorage.getItem(ADMIN_SCROLL_STORAGE_KEY)) || 0;
+    } catch {
+      // Start at the top when browser storage is unavailable.
+    }
+    const frame = window.requestAnimationFrame(() => {
+      window.scrollTo({ top: savedScrollY, left: 0, behavior: 'auto' });
+      hasRestoredScroll.current = true;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [isDataLoading]);
 
   useEffect(() => {
     if (!isAdmin) return;

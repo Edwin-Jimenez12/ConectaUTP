@@ -148,7 +148,7 @@ export function getServiceImages(serviceId: string) {
 }
 
 export async function getServiceCoverImages(serviceIds: string[]) {
-  const covers = new Map<string, { url: string; altText: string }>();
+  const covers = new Map<string, { url: string; altText: string; galleryImages: Array<{ url: string; altText: string }> }>();
   if (serviceIds.length === 0) return { data: covers, error: null };
 
   const result = await supabase
@@ -159,18 +159,28 @@ export async function getServiceCoverImages(serviceIds: string[]) {
 
   if (result.error) return { data: covers, error: result.error };
 
-  const firstImageByService = new Map<string, ServiceImage>();
-  for (const image of result.data ?? []) {
-    const current = firstImageByService.get(image.service_id);
-    if (!current || image.is_cover) firstImageByService.set(image.service_id, image);
-  }
+  const imageRows = result.data ?? [];
+  if (imageRows.length === 0) return { data: covers, error: null };
+  const signedResult = await supabase.storage.from('service-images').createSignedUrls(imageRows.map((image) => image.storage_path), 600);
+  if (signedResult.error) return { data: covers, error: signedResult.error };
+  const urlsByPath = new Map((signedResult.data ?? []).flatMap((item) => item.path && item.signedUrl ? [[item.path, item.signedUrl] as const] : []));
 
-  await Promise.all([...firstImageByService.values()].map(async (image) => {
-    const { data, error } = await supabase.storage
-      .from('service-images')
-      .createSignedUrl(image.storage_path, 600);
-    if (!error && data?.signedUrl) covers.set(image.service_id, { url: data.signedUrl, altText: image.alt_text });
-  }));
+  const galleries = new Map<string, Array<{ image: ServiceImage; url: string; altText: string }>>();
+  for (const image of imageRows) {
+    const url = urlsByPath.get(image.storage_path);
+    if (!url) continue;
+    const gallery = galleries.get(image.service_id) ?? [];
+    gallery.push({ image, url, altText: image.alt_text });
+    galleries.set(image.service_id, gallery);
+  }
+  for (const [serviceId, gallery] of galleries) {
+    const cover = gallery.find(({ image }) => image.is_cover) ?? gallery[0];
+    covers.set(serviceId, {
+      url: cover.url,
+      altText: cover.altText,
+      galleryImages: gallery.map(({ url, altText }) => ({ url, altText })),
+    });
+  }
 
   return { data: covers, error: null };
 }

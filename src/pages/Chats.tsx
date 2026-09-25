@@ -3,14 +3,14 @@ import { Mail } from 'lucide-react';
 import { useAuth } from '../auth/useAuth';
 import { Button } from '../components/Button';
 import { getPublicService } from '../lib/services';
-import { getOrCreateConversation, listChatConversations, listChatMessages, markChatMessagesRead, profileDisplayName, searchChatUsers, sendChatMessage, SERVICE_REQUEST_MESSAGE, subscribeToChat } from '../lib/chat';
+import { getOrCreateConversation, listChatConversations, listChatMessages, markChatMessagesRead, profileDisplayName, searchChatUsers, sendChatMessage, subscribeToChat } from '../lib/chat';
 import type { ChatConversation, ChatMessage, ChatProfile } from '../types/chat';
 
 function formatTime(value: string) {
   return new Intl.DateTimeFormat('es-PA', { hour: '2-digit', minute: '2-digit' }).format(new Date(value));
 }
 
-export function Chats({ initialServiceId = '' }: { initialServiceId?: string }) {
+export function Chats({ initialServiceId = '', initialProfileId = '' }: { initialServiceId?: string; initialProfileId?: string }) {
   const { session } = useAuth();
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [selectedId, setSelectedId] = useState('');
@@ -72,28 +72,30 @@ export function Chats({ initialServiceId = '' }: { initialServiceId?: string }) 
         setStatus('No se pudo abrir la solicitud de servicio.');
         return;
       }
-      const existingMessages = await listChatMessages(result.data.id);
-      if (existingMessages.error) {
-        setStatus('No se pudo revisar la conversación existente.');
-        return;
-      }
-      const alreadyRequested = (existingMessages.data ?? []).some((message) => (
-        message.sender_id === session.user.id
-        && message.service_id === data.id
-        && message.body === SERVICE_REQUEST_MESSAGE
-      ));
-      if (!alreadyRequested) {
-        const sent = await sendChatMessage(result.data, session.user.id, SERVICE_REQUEST_MESSAGE, data.id);
-        if (sent.error) {
-          setStatus('No se pudo enviar la solicitud de servicio.');
-          return;
-        }
-      }
       setSelectedId(result.data.id);
       await refreshConversations();
     });
     return () => { active = false; };
   }, [initialServiceId, refreshConversations, session]);
+
+  useEffect(() => {
+    if (!session || !initialProfileId) return;
+    let active = true;
+    if (initialProfileId === session.user.id) {
+      setStatus('No puedes iniciar una conversación contigo.');
+      return undefined;
+    }
+    void getOrCreateConversation(session.user.id, initialProfileId).then(async (result) => {
+      if (!active) return;
+      if (result.error || !result.data) {
+        setStatus('No se pudo abrir la conversación directa.');
+        return;
+      }
+      setSelectedId(result.data.id);
+      await refreshConversations();
+    });
+    return () => { active = false; };
+  }, [initialProfileId, refreshConversations, session]);
 
   useEffect(() => {
     if (!session || !selectedId) {

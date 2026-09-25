@@ -42,7 +42,6 @@ function App() {
       setCurrentPage(getRouteHash());
       window.requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' }));
     };
-    handleHashChange();
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
@@ -77,7 +76,8 @@ function App() {
   const isManageServicesPage = currentPage === '#mis-servicios';
   const isFavoritesPage = currentPage === '#favoritos';
   const isChatsPage = currentPage === '#chats' || currentPage.startsWith('#chats/');
-  const chatServiceId = currentPage.startsWith('#chats/') ? currentPage.slice('#chats/'.length) : '';
+  const chatProfileId = currentPage.startsWith('#chats/usuario/') ? currentPage.slice('#chats/usuario/'.length) : '';
+  const chatServiceId = currentPage.startsWith('#chats/') && !chatProfileId ? currentPage.slice('#chats/'.length) : '';
   const serviceId = currentPage.startsWith('#servicio/') ? currentPage.slice('#servicio/'.length) : '';
   const profileId = currentPage.startsWith('#perfil/') ? currentPage.slice('#perfil/'.length) : '';
   const isProtectedPage = isSettingsPage || isPrivacyPage || isSecurityPage || isAccountPage || isCreateServicePage || isManageServicesPage || isFavoritesPage || isChatsPage || isAdminPage;
@@ -144,7 +144,7 @@ function App() {
         ) : isFavoritesPage ? (
           <Favoritos />
         ) : isChatsPage ? (
-          <Chats initialServiceId={chatServiceId} />
+          <Chats initialServiceId={chatServiceId} initialProfileId={chatProfileId} />
         ) : isExplorePage ? (
           <Explora />
         ) : isAboutPage ? (

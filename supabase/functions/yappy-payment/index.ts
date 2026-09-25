@@ -28,8 +28,9 @@ Deno.serve(async (request) => {
     if (!authorization?.startsWith('Bearer ')) return json({ error: 'Sesión no autorizada.' }, 401);
 
     const url = Deno.env.get('SUPABASE_URL') ?? '';
-    const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const anonKey = getSupabasePublishableKey();
+    const serviceRoleKey = getSupabaseSecretKey();
+    if (!anonKey || !serviceRoleKey) return json({ error: 'Faltan las claves internas de Supabase para procesar el pago.' }, 500);
     const userClient = createClient(url, anonKey, { global: { headers: { Authorization: authorization } } });
     const { data: userData, error: userError } = await userClient.auth.getUser();
     if (userError || !userData.user) return json({ error: 'Sesión no autorizada.' }, 401);
@@ -60,7 +61,15 @@ async function createOrder(admin: ReturnType<typeof createClient>, providerId: s
 
   if (planId) {
     const result = await admin.from('platform_plans').select('id, name, price, billing_period, is_active').eq('id', planId).maybeSingle();
-    if (result.error || !result.data || !result.data.is_active || result.data.billing_period === 'free' || Number(result.data.price) <= 0) return json({ error: 'El plan no está disponible para pago.' }, 400);
+    if (result.error) {
+      console.error('platform_plans lookup failed', result.error);
+      const detail = [result.error.code, result.error.message].filter(Boolean).join(': ');
+      return json({ error: `No se pudo verificar la configuración del plan${detail ? ` (${detail})` : ''}.` }, 500);
+    }
+    if (!result.data) return json({ error: 'El plan seleccionado ya no existe.' }, 400);
+    if (!result.data.is_active) return json({ error: 'El plan seleccionado está inactivo.' }, 400);
+    if (result.data.billing_period === 'free') return json({ error: 'Este plan está configurado como Gratis. En el panel administrativo, cambia su periodo a Mensual, Trimestral o Anual para poder pagarlo.' }, 400);
+    if (Number(result.data.price) <= 0) return json({ error: 'El plan debe tener un precio mayor que B/.0.00 para poder pagarlo.' }, 400);
     amount = Number(result.data.price);
     concept = `Plan ${result.data.name}`;
   } else if (promotionId) {
@@ -115,7 +124,7 @@ async function handleIpn(url: URL) {
   const domain = url.searchParams.get('domain');
   if (!orderId || !status || !hash || !domain || !(await verifyHash(orderId, status, domain, hash))) return json({ success: false }, 400);
 
-  const admin = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
+  const admin = createClient(Deno.env.get('SUPABASE_URL') ?? '', getSupabaseSecretKey());
   const orderResult = await admin.from('provider_payment_orders').select('*').eq('order_id', orderId).maybeSingle();
   if (orderResult.error || !orderResult.data) return json({ success: false }, 404);
   if (orderResult.data.status === 'executed') return json({ success: true }, 200);
@@ -153,7 +162,11 @@ async function fulfillOrder(admin: ReturnType<typeof createClient>, order: Payme
 async function yappyRequest(path: string, body: Record<string, unknown>, token?: string) {
   const response = await fetch(`${apiBaseUrl()}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: token } : {}) }, body: JSON.stringify(body) });
   const payload = await response.json();
-  if (!response.ok || payload?.status?.code && payload.status.code !== '00') throw new Error(payload?.status?.description ?? 'Yappy rechazó la solicitud.');
+  const statusCode = payload?.status?.code;
+  const statusDescription = String(payload?.status?.description ?? '').trim().toLowerCase();
+  const successCode = statusCode == null || /^0+$/.test(String(statusCode).trim()) || String(statusCode).trim() === '200';
+  const successDescription = statusDescription === 'correct execution' || statusDescription === 'ejecución correcta';
+  if (!response.ok || !successCode && !successDescription) throw new Error(payload?.status?.description ?? 'Yappy rechazó la solicitud.');
   return payload;
 }
 
@@ -174,6 +187,26 @@ function requiredSecret(name: string) {
   const value = Deno.env.get(name);
   if (!value) throw new Error(`Falta el secreto ${name}.`);
   return value;
+}
+
+function getSupabasePublishableKey() {
+  const keys = parseKeyMap(Deno.env.get('SUPABASE_PUBLISHABLE_KEYS'));
+  return keys.default ?? Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+}
+
+function getSupabaseSecretKey() {
+  const keys = parseKeyMap(Deno.env.get('SUPABASE_SECRET_KEYS'));
+  return keys.default ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+}
+
+function parseKeyMap(value: string | undefined) {
+  if (!value) return {} as Record<string, string>;
+  try {
+    const parsed = JSON.parse(value) as Record<string, unknown>;
+    return Object.fromEntries(Object.entries(parsed).filter((entry): entry is [string, string] => typeof entry[1] === 'string'));
+  } catch {
+    return {} as Record<string, string>;
+  }
 }
 
 function asId(value: unknown) {

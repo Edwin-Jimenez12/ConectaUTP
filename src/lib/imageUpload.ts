@@ -43,7 +43,21 @@ export async function uploadServiceImages(serviceId: string, files: File[], altT
     throw new Error('Puedes subir máximo 5 imágenes por servicio.');
   }
 
+  const { data: existingImages, error: existingImagesError } = await supabase
+    .from('service_images')
+    .select('sort_order, is_cover')
+    .eq('service_id', serviceId)
+    .order('sort_order', { ascending: true });
+  if (existingImagesError) throw existingImagesError;
+  if ((existingImages?.length ?? 0) + files.length > MAX_FILES) {
+    throw new Error('Puedes tener máximo 5 imágenes por servicio.');
+  }
+
+  const nextSortOrder = Math.max(-1, ...(existingImages ?? []).map((image) => Number(image.sort_order ?? -1))) + 1;
+  const alreadyHasCover = (existingImages ?? []).some((image) => image.is_cover);
+
   const paths: string[] = [];
+  const insertedImageIds: string[] = [];
   try {
     for (const [index, file] of files.entries()) {
       const compressed = await compressImage(file);
@@ -58,12 +72,16 @@ export async function uploadServiceImages(serviceId: string, files: File[], altT
         service_id: serviceId,
         storage_path: path,
         alt_text: altTexts[index]?.trim() || `Imagen del servicio ${index + 1}`,
-        sort_order: index,
-        is_cover: index === 0,
-      });
+        sort_order: nextSortOrder + index,
+        is_cover: !alreadyHasCover && index === 0,
+      }).select('id').single();
       if (row.error) throw row.error;
+      insertedImageIds.push(row.data.id);
     }
   } catch (error) {
+    if (insertedImageIds.length) {
+      await supabase.from('service_images').delete().in('id', insertedImageIds);
+    }
     if (paths.length) {
       await supabase.storage.from('service-images').remove(paths);
     }

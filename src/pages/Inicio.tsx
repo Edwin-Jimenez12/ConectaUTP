@@ -12,6 +12,7 @@ const EMPTY_FAVORITES = new Set<string>();
 function toCard(service: PublicService, canView: boolean, userId?: string): ServiceCardData {
   return {
     id: service.id,
+    providerId: service.owner_id,
     title: service.title,
     provider: service.provider_name,
     price: service.price === null ? 'Precio por definir' : `Desde B/.${service.price}`,
@@ -20,6 +21,7 @@ function toCard(service: PublicService, canView: boolean, userId?: string): Serv
     imageUrl: service.cover_image_url,
     imageAlt: service.cover_image_alt,
     providerImageUrl: service.provider_avatar_url,
+    galleryImages: service.gallery_images,
     locked: !canView,
     requestHref: service.owner_id !== userId && service.contact_clients_enabled !== false ? (canView ? `#chats/${service.id}` : '#login') : undefined,
   };
@@ -106,7 +108,7 @@ function HeroSection() {
           <h1 className="m-0 text-5xl font-bold max-md:text-4xl">Lo que necesitas,<br />dentro de tu <span className="text-[#7b32ca]">comunidad</span></h1>
           <p className="hero-subtitle my-3 mb-4 max-w-[480px] text-base leading-[1.45] text-[#000000]/75 max-md:text-sm">Encuentra u ofrece servicios dentro de la comunidad UTP y conecta con estudiantes que pueden ayudarte a lograr más.</p>
           <div className="flex max-w-[475px] max-sm:flex-col max-sm:gap-2">
-            <input className="min-w-0 w-full rounded-l-[6px] border border-[#000000]/60 px-4 py-3 text-base max-sm:rounded-md" id="service-search" type="search" placeholder="¿Qué estás buscando?" value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') window.location.hash = `#explorar?query=${encodeURIComponent(query.trim())}`; }} />
+            <input className="hero-search-input min-w-0 w-full rounded-l-[6px] border px-4 py-3 text-base max-sm:rounded-md" id="service-search" type="search" placeholder="¿Qué estás buscando?" value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') window.location.hash = `#explorar?query=${encodeURIComponent(query.trim())}`; }} />
             <Button className="shrink-0 cursor-pointer whitespace-nowrap rounded-l-none rounded-r-[6px] px-6 text-sm max-sm:rounded-md" onClick={() => { window.location.hash = `#explorar?query=${encodeURIComponent(query.trim())}`; }}>Buscar servicio</Button>
           </div>
           <Button variant="outline" className="mt-4 min-w-[160px] cursor-pointer text-sm" onClick={() => { window.location.hash = '#publicar'; }}>+ Publicar mi servicio</Button>
@@ -148,7 +150,7 @@ function HorizontalServiceRow({ services, canView, userId, favoriteIds, onToggle
       <div className="flex gap-[13px] overflow-x-hidden pb-3 pr-1" ref={rowRef}>
         {visibleServices.map((service) => (
         <div className={`${featured ? 'w-[310px]' : 'w-[250px]'} shrink-0 max-sm:w-[82vw]`} key={service.id}>
-          <ServiceCard service={toCard(service, canView, userId)} layout="grid" featured={Boolean(service.is_featured || service.is_interest_featured)} promoted={Boolean(service.is_promoted)} href={`#servicio/${service.id}`} isFavorite={favoriteIds.has(service.id)} onToggleFavorite={() => onToggleFavorite(service.id)} />
+          <ServiceCard service={toCard(service, canView, userId)} layout="grid" featured={Boolean(service.is_featured || service.is_interest_featured)} promoted={Boolean(service.is_promoted)} imageHref={`#servicio/${service.id}`} isFavorite={favoriteIds.has(service.id)} onToggleFavorite={() => onToggleFavorite(service.id)} />
         </div>
         ))}
       </div>
@@ -223,6 +225,7 @@ export function Inicio() {
         ...service,
         cover_image_url: coverResult.data.get(service.id)?.url,
         cover_image_alt: coverResult.data.get(service.id)?.altText,
+        gallery_images: coverResult.data.get(service.id)?.galleryImages,
       })));
     })();
     return () => { active = false; };

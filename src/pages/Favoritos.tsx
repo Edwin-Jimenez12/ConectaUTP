@@ -8,6 +8,7 @@ import type { PublicService, ServiceCardData } from '../types/service';
 function toCard(service: PublicService, userId: string): ServiceCardData {
   return {
     id: service.id,
+    providerId: service.owner_id,
     title: service.title,
     provider: service.provider_name,
     price: service.price === null ? 'Precio por definir' : `Desde B/.${service.price}`,
@@ -16,6 +17,7 @@ function toCard(service: PublicService, userId: string): ServiceCardData {
     imageUrl: service.cover_image_url,
     imageAlt: service.cover_image_alt,
     providerImageUrl: service.provider_avatar_url,
+    galleryImages: service.gallery_images,
     requestHref: service.owner_id !== userId ? `#chats/${service.id}` : undefined,
   };
 }
@@ -46,6 +48,7 @@ export function Favoritos() {
         ...service,
         cover_image_url: coverResult.data.get(service.id)?.url,
         cover_image_alt: coverResult.data.get(service.id)?.altText,
+        gallery_images: coverResult.data.get(service.id)?.galleryImages,
       })));
       setIsLoading(false);
     })();
@@ -74,7 +77,7 @@ export function Favoritos() {
         </div>
       </div>
       {message && <p className="mb-5 rounded-lg bg-[#fff7df] p-4 text-sm text-[#735d22]">{message}</p>}
-      {isLoading ? <p className="rounded-lg border border-slate-200 p-6 text-sm text-[#676878]">Cargando favoritos...</p> : services.length === 0 ? <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center"><Heart aria-hidden="true" className="mx-auto h-8 w-8 text-[#7b32ca]" /><h2 className="mt-4 text-lg font-semibold">Todavía no tienes favoritos</h2><p className="mt-2 text-sm text-[#676878]">Toca el corazón de una publicación para guardarla aquí.</p><button className="mt-5 cursor-pointer rounded-md bg-[#7b32ca] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#6422b0]" type="button" onClick={() => { window.location.hash = '#explorar'; }}>Explorar servicios</button></div> : <div className="grid grid-cols-3 gap-5 max-2xl:grid-cols-2 max-sm:grid-cols-1">{services.map((service) => <ServiceCard key={service.id} service={toCard(service, session?.user.id ?? '')} isFavorite onToggleFavorite={() => void removeFavorite(service.id)} href={`#servicio/${service.id}`} />)}</div>}
+      {isLoading ? <p className="rounded-lg border border-slate-200 p-6 text-sm text-[#676878]">Cargando favoritos...</p> : services.length === 0 ? <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center"><Heart aria-hidden="true" className="mx-auto h-8 w-8 text-[#7b32ca]" /><h2 className="mt-4 text-lg font-semibold">Todavía no tienes favoritos</h2><p className="mt-2 text-sm text-[#676878]">Toca el corazón de una publicación para guardarla aquí.</p><button className="mt-5 cursor-pointer rounded-md bg-[#7b32ca] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#6422b0]" type="button" onClick={() => { window.location.hash = '#explorar'; }}>Explorar servicios</button></div> : <div className="grid grid-cols-3 gap-5 max-2xl:grid-cols-2 max-sm:grid-cols-1">{services.map((service) => <ServiceCard key={service.id} service={toCard(service, session?.user.id ?? '')} imageHref={`#servicio/${service.id}`} isFavorite onToggleFavorite={() => void removeFavorite(service.id)} />)}</div>}
     </section>
   );
 }

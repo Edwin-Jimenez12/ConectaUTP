@@ -13,9 +13,19 @@ type ServiceLayout = 'list' | 'grid';
 const SERVICE_LAYOUT_STORAGE_KEY = 'conectautp-service-layout';
 const EMPTY_FAVORITES = new Set<string>();
 
+function shuffleServices(items: PublicService[]) {
+  const shuffled = [...items];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+  }
+  return shuffled;
+}
+
 function toCard(service: PublicService, canView: boolean, userId?: string): ServiceCardData {
   return {
     id: service.id,
+    providerId: service.owner_id,
     title: service.title,
     provider: service.provider_name,
     price: service.price === null ? 'Precio por definir' : `Desde B/.${service.price}`,
@@ -24,6 +34,7 @@ function toCard(service: PublicService, canView: boolean, userId?: string): Serv
     imageUrl: service.cover_image_url,
     imageAlt: service.cover_image_alt,
     providerImageUrl: service.provider_avatar_url,
+    galleryImages: service.gallery_images,
     locked: !canView,
     requestHref: service.owner_id !== userId && service.contact_clients_enabled !== false ? (canView ? `#chats/${service.id}` : '#login') : undefined,
   };
@@ -65,6 +76,7 @@ export function Explora() {
           ...service,
           cover_image_url: coverResult.data.get(service.id)?.url,
           cover_image_alt: coverResult.data.get(service.id)?.altText,
+          gallery_images: coverResult.data.get(service.id)?.galleryImages,
         })));
       } else {
         setServices(nextServices);
@@ -111,12 +123,14 @@ export function Explora() {
     }
   }
 
-  const filteredServices = useMemo(() => services
-    .filter((service) => `${service.title} ${service.description} ${service.provider_name}`.toLowerCase().includes(query.toLowerCase()) && (!category || service.category_name === category))
-    .sort(comparePublicServices), [category, query, services]);
-  const totalPages = Math.max(1, Math.ceil(filteredServices.length / servicesPerPage));
+  const randomizedServices = useMemo(() => shuffleServices(services), [services]);
+  const filteredServices = useMemo(() => randomizedServices
+    .filter((service) => `${service.title} ${service.description} ${service.provider_name}`.toLowerCase().includes(query.toLowerCase()) && (!category || service.category_name === category)), [category, query, randomizedServices]);
+  const featuredServices = useMemo(() => filteredServices.filter(hasVisibleHighlight).sort(comparePublicServices), [filteredServices]);
+  const regularServices = useMemo(() => filteredServices.filter((service) => !hasVisibleHighlight(service)), [filteredServices]);
+  const totalPages = Math.max(1, Math.ceil(regularServices.length / servicesPerPage));
   const page = Math.min(currentPage, totalPages);
-  const visibleServices = filteredServices.slice((page - 1) * servicesPerPage, page * servicesPerPage);
+  const visibleServices = regularServices.slice((page - 1) * servicesPerPage, page * servicesPerPage);
   const visibleFavoriteIds = favoriteOwnerId === session?.user.id ? favoriteIds : EMPTY_FAVORITES;
 
   function changePage(nextPage: number) {
@@ -127,7 +141,7 @@ export function Explora() {
   return (
     <>
       <section className="bg-linear-to-r from-white via-[#f5f4ff] to-[#e4dcff] py-10"><div className="mx-auto w-[calc(100%-48px)] max-w-7xl"><h1 className="text-3xl font-bold">Explora servicios</h1><p className="mt-2 text-sm">Encuentra personas de la comunidad UTP que pueden ayudarte.</p><div className="mt-4 flex gap-3 max-md:flex-col"><input className="h-11 w-[300px] rounded-md border border-[#d9d9df] bg-white px-4 text-sm max-md:w-full" placeholder="¿Qué estás buscando?" value={query} onChange={(event) => { setQuery(event.target.value); setCurrentPage(1); }} onKeyDown={(event) => { if (event.key === 'Enter') window.scrollTo({ top: 0, left: 0, behavior: 'smooth' }); }} /><Button className="min-h-11 px-6 text-sm max-md:w-full" onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'smooth' })}>Buscar servicio</Button><Button variant="outline" className="min-h-11 px-5 text-sm max-md:w-full" onClick={() => { window.location.hash = '#publicar'; }}>＋ Publicar mi servicio</Button></div></div></section>
-      <section className="mx-auto grid w-[calc(100%-48px)] max-w-7xl grid-cols-[220px_1fr] gap-6 py-12 max-lg:grid-cols-1 max-md:py-8"><ExploreFilters selectedCategory={category} onCategoryChange={(nextCategory) => { setCategory(nextCategory); setCurrentPage(1); }} categories={categoryNames} /><div>{message && <p className="mb-4 rounded bg-[#fff7df] p-4 text-left text-sm text-[#735d22]">{message}</p>}<div className="mb-7 flex flex-wrap items-end justify-between gap-4 max-sm:items-start"><div><h2 className="text-base font-semibold">Servicios encontrados</h2><p className="text-sm">{filteredServices.length} servicios · destacados primero</p></div><div className="flex items-center gap-1 rounded-lg border border-[#dedee8] bg-white p-1" aria-label="Cambiar vista"><button className={`inline-flex cursor-pointer items-center gap-1 rounded-md px-2.5 py-2 text-xs font-semibold transition-colors ${layout === 'list' ? 'bg-[#7b32ca] text-white' : 'text-[#5420a8] hover:bg-[#f4f1ff]'}`} type="button" onClick={() => setLayout('list')} aria-label="Ver servicios en lista" aria-pressed={layout === 'list'}><List aria-hidden="true" className="h-4 w-4" />Lista</button><button className={`inline-flex cursor-pointer items-center gap-1 rounded-md px-2.5 py-2 text-xs font-semibold transition-colors ${layout === 'grid' ? 'bg-[#7b32ca] text-white' : 'text-[#5420a8] hover:bg-[#f4f1ff]'}`} type="button" onClick={() => setLayout('grid')} aria-label="Ver servicios en cuadrícula" aria-pressed={layout === 'grid'}><Grid2X2 aria-hidden="true" className="h-4 w-4" />Cuadrícula</button></div></div>{filteredServices.length > 0 && <section className="mb-8"><h3 className="mb-3 text-xl font-semibold">Publicaciones relevantes</h3><HorizontalServiceRow services={filteredServices} canView={Boolean(session)} userId={session?.user.id} favoriteIds={visibleFavoriteIds} onToggleFavorite={(serviceId) => void toggleFavorite(serviceId)} featured /></section>}<div className={layout === 'list' ? 'space-y-4' : 'grid grid-cols-3 gap-5 max-2xl:grid-cols-2 max-sm:grid-cols-1'}>{visibleServices.map((service) => <ServiceCard key={service.id} service={toCard(service, Boolean(session), session?.user.id)} layout={layout} featured={hasVisibleHighlight(service)} promoted={Boolean(service.is_promoted)} href={`#servicio/${service.id}`} isFavorite={visibleFavoriteIds.has(service.id)} onToggleFavorite={() => void toggleFavorite(service.id)} />)}</div>{!message && filteredServices.length === 0 && <p className="rounded-lg border border-slate-200 p-5 text-sm text-[#676878]">No hay servicios publicados todavía.</p>}{filteredServices.length > 0 && <Pagination currentPage={page} totalPages={totalPages} onPageChange={changePage} />}</div></section>
+      <section className="mx-auto grid w-[calc(100%-48px)] max-w-7xl grid-cols-[220px_1fr] gap-6 py-12 max-lg:grid-cols-1 max-md:py-8"><ExploreFilters selectedCategory={category} onCategoryChange={(nextCategory) => { setCategory(nextCategory); setCurrentPage(1); }} categories={categoryNames} /><div className="min-w-0">{message && <p className="mb-4 rounded bg-[#fff7df] p-4 text-left text-sm text-[#735d22]">{message}</p>}<div className="mb-7 flex flex-wrap items-end justify-between gap-4 max-sm:items-start"><div><h2 className="text-base font-semibold">Servicios encontrados</h2><p className="text-sm">{filteredServices.length} servicios</p></div><div className="flex items-center gap-1 rounded-lg border border-[#dedee8] bg-white p-1" aria-label="Cambiar vista"><button className={`inline-flex cursor-pointer items-center gap-1 rounded-md px-2.5 py-2 text-xs font-semibold transition-colors ${layout === 'list' ? 'bg-[#7b32ca] text-white' : 'text-[#5420a8] hover:bg-[#f4f1ff]'}`} type="button" onClick={() => setLayout('list')} aria-label="Ver servicios en lista" aria-pressed={layout === 'list'}><List aria-hidden="true" className="h-4 w-4" />Lista</button><button className={`inline-flex cursor-pointer items-center gap-1 rounded-md px-2.5 py-2 text-xs font-semibold transition-colors ${layout === 'grid' ? 'bg-[#7b32ca] text-white' : 'text-[#5420a8] hover:bg-[#f4f1ff]'}`} type="button" onClick={() => setLayout('grid')} aria-label="Ver servicios en cuadrícula" aria-pressed={layout === 'grid'}><Grid2X2 aria-hidden="true" className="h-4 w-4" />Cuadrícula</button></div></div>{featuredServices.length > 0 && <section className="mb-8"><h3 className="mb-3 text-xl font-semibold">Publicaciones relevantes</h3><HorizontalServiceRow services={featuredServices} canView={Boolean(session)} userId={session?.user.id} favoriteIds={visibleFavoriteIds} onToggleFavorite={(serviceId) => void toggleFavorite(serviceId)} featured /></section>}<div className={`${layout === 'list' ? 'space-y-4' : 'grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3'} min-w-0`}>{visibleServices.map((service) => <ServiceCard key={service.id} service={toCard(service, Boolean(session), session?.user.id)} layout={layout} mediaSize="bounded" featured={false} promoted={Boolean(service.is_promoted)} imageHref={`#servicio/${service.id}`} isFavorite={visibleFavoriteIds.has(service.id)} onToggleFavorite={() => void toggleFavorite(service.id)} />)}</div>{!message && filteredServices.length === 0 && <p className="rounded-lg border border-slate-200 p-5 text-sm text-[#676878]">No hay servicios publicados todavía.</p>}{regularServices.length > 0 && <Pagination currentPage={page} totalPages={totalPages} onPageChange={changePage} />}</div></section>
     </>
   );
 }

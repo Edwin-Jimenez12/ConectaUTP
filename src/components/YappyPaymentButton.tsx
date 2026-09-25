@@ -1,7 +1,11 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { clearPendingYappyPayment, readPendingYappyPayment, savePendingYappyPayment } from '../lib/yappyCheckoutStorage';
 
 let scriptPromise: Promise<void> | null = null;
+const PAYMENT_SESSION_MAX_AGE = 5 * 60 * 1000;
+
+type YappyButton = HTMLElement & { eventPayment?: (params: Record<string, string>) => void };
 
 function loadYappyScript() {
   if (scriptPromise) return scriptPromise;
@@ -25,11 +29,12 @@ function loadYappyScript() {
 
 export function YappyPaymentButton({ planId, promotionId, serviceId, onSuccess }: { planId?: string; promotionId?: string; serviceId?: string; onSuccess?: () => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const checkoutKey = `${planId ?? ''}:${promotionId ?? ''}:${serviceId ?? ''}`;
   const [aliasYappy, setAliasYappy] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isScriptReady, setIsScriptReady] = useState(false);
-  const startPayment = useEffectEvent(async (button: HTMLElement & { eventPayment?: (params: Record<string, string>) => void }) => {
+  const startPayment = useEffectEvent(async (button: YappyButton) => {
     if (!/^6\d{7}$/.test(aliasYappy.replace(/\D/g, ''))) {
       setMessage('Escribe tu número panameño de Yappy, sin +507.');
       return;
@@ -42,14 +47,17 @@ export function YappyPaymentButton({ planId, promotionId, serviceId, onSuccess }
       setMessage(await getPaymentErrorMessage(error, data));
       return;
     }
+    savePendingYappyPayment({ checkoutKey, createdAt: Date.now(), transactionId: data.body.transactionId, documentName: data.body.documentName, token: data.body.token });
     button.eventPayment?.({ transactionId: data.body.transactionId, documentName: data.body.documentName, token: data.body.token });
   });
   const handleSuccess = useEffectEvent(() => {
+    clearPendingYappyPayment();
     setIsLoading(false);
     setMessage('Pago enviado. Estamos esperando la confirmación de Yappy.');
     onSuccess?.();
   });
   const handleError = useEffectEvent(() => {
+    clearPendingYappyPayment();
     setIsLoading(false);
     setMessage('Yappy no pudo completar el pago. Inténtalo nuevamente.');
   });
@@ -58,7 +66,7 @@ export function YappyPaymentButton({ planId, promotionId, serviceId, onSuccess }
     let active = true;
     void loadYappyScript().then(() => {
       if (!active || !containerRef.current || containerRef.current.children.length > 0) return;
-      const button = document.createElement('btn-yappy');
+      const button = document.createElement('btn-yappy') as YappyButton;
       button.setAttribute('theme', 'blue');
       button.setAttribute('rounded', 'true');
       containerRef.current.appendChild(button);
@@ -68,13 +76,19 @@ export function YappyPaymentButton({ planId, promotionId, serviceId, onSuccess }
       button.addEventListener('eventSuccess', handleSuccess);
       button.addEventListener('eventError', handleError);
       setIsScriptReady(true);
+      const pendingPayment = readPendingYappyPayment(checkoutKey, PAYMENT_SESSION_MAX_AGE);
+      if (pendingPayment) {
+        setIsLoading(true);
+        setMessage('Retomando la solicitud de pago con Yappy...');
+        button.eventPayment?.({ transactionId: pendingPayment.transactionId, documentName: pendingPayment.documentName, token: pendingPayment.token });
+      }
     }).catch((error: unknown) => {
       if (active) setMessage(error instanceof Error ? error.message : 'No se pudo cargar Yappy.');
     });
     return () => { active = false; };
-  }, []);
+  }, [checkoutKey]);
 
-  return <div className="space-y-3" aria-busy={isLoading}><label className="block text-left text-sm font-medium">Número de Yappy<input className="mt-1 h-11 w-full rounded-md border border-slate-200 px-3 text-sm" inputMode="numeric" maxLength={8} placeholder="65591976" value={aliasYappy} onChange={(event) => setAliasYappy(event.target.value)} /></label><div className="flex min-h-11 items-center justify-center" ref={containerRef} />{!isScriptReady && !message && <p className="text-center text-sm text-[#676878]">Cargando botón de Yappy...</p>}{message && <p className="text-sm text-[#6040b5]">{message}</p>}</div>;
+  return <div className="yappy-payment-form space-y-3" aria-busy={isLoading}><label className="block text-left text-sm font-semibold">Número de Yappy<input className="yappy-phone-input mt-1 h-11 w-full rounded-lg border px-3 text-sm" inputMode="numeric" maxLength={8} placeholder="65591976" value={aliasYappy} onChange={(event) => setAliasYappy(event.target.value)} /></label><div className="flex min-h-11 items-center justify-center" ref={containerRef} />{!isScriptReady && !message && <p className="yappy-payment-status text-center text-sm">Cargando botón de Yappy...</p>}{message && <p className="yappy-payment-status text-sm" role="status">{message}</p>}</div>;
 }
 
 async function getPaymentErrorMessage(error: unknown, data: { error?: string } | null) {

@@ -23,6 +23,7 @@ export interface PublicService extends Pick<DatabaseService, 'id' | 'owner_id' |
   provider_name: string;
   provider_username: string | null;
   provider_avatar_url?: string | null;
+  gallery_images?: Array<{ url: string; altText: string }>;
   cover_image_url?: string;
   cover_image_alt?: string;
   is_featured?: boolean;
@@ -39,6 +40,7 @@ export interface PublicService extends Pick<DatabaseService, 'id' | 'owner_id' |
 
 export interface ServiceCardData {
   id: string;
+  providerId: string;
   title: string;
   provider: string;
   price: string;
@@ -47,6 +49,7 @@ export interface ServiceCardData {
   imageUrl?: string;
   imageAlt?: string;
   providerImageUrl?: string | null;
+  galleryImages?: Array<{ url: string; altText: string }>;
   locked?: boolean;
   requestHref?: string;
 }

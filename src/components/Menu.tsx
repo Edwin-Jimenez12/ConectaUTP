@@ -112,21 +112,21 @@ export function Menu({ theme, onToggleTheme }: { theme: 'light' | 'dark'; onTogg
             className="flex h-10 w-10 items-center justify-center rounded-md border border-[#d9d2eb] text-[#5420a8]"
             type="button"
             aria-expanded={isMenuOpen}
-            aria-label="Abrir menú"
+            aria-label={isMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
-            <MenuIcon aria-hidden="true" className="h-5 w-5" />
+            <MenuIcon aria-hidden="true" className={`h-5 w-5 transition-transform duration-300 ${isMenuOpen ? 'rotate-90' : ''}`} />
           </button>
         </div>
       </div>
-      {isMenuOpen && (
-        <div className="border-t border-[#e5e5ec] px-4 py-3 lg:hidden">
+      <div className="mobile-menu-panel lg:hidden" data-open={isMenuOpen} aria-hidden={!isMenuOpen} inert={!isMenuOpen}>
+        <div className="mobile-menu-panel-content border-t border-[#e5e5ec] px-4 py-3">
           <nav className="mx-auto flex max-w-7xl flex-col gap-3" aria-label="Menú móvil">
             {visibleMenuItems.map((item) => <a className={`rounded px-2 py-1 ${isActive(item.href) ? 'bg-[#f0ebff] font-semibold text-[#5420a8]' : ''}`} key={item.label} href={item.href} onClick={(event) => handleMenuClick(item.href, event)} aria-current={isActive(item.href) ? 'page' : undefined}>{item.label}</a>)}
-            {session ? <ProfileMenu displayName={displayName} avatarUrl={profile?.avatar_url} theme={theme} isOpen={isProfileOpen} onToggle={() => setIsProfileOpen(!isProfileOpen)} onToggleTheme={onToggleTheme} onClose={closeMenus} onSignOut={signOut} isAdmin={isAdmin} /> : <AuthActions onClick={closeMenus} />}
+            {session ? <ProfileMenu displayName={displayName} avatarUrl={profile?.avatar_url} theme={theme} isOpen={isProfileOpen} onToggle={() => setIsProfileOpen(!isProfileOpen)} onToggleTheme={onToggleTheme} onClose={closeMenus} onSignOut={signOut} isAdmin={isAdmin} mobile /> : <AuthActions onClick={closeMenus} />}
           </nav>
         </div>
-      )}
+      </div>
     </header>
   );
 }
@@ -160,9 +160,10 @@ interface ProfileMenuProps {
   onClose: () => void;
   onSignOut: () => Promise<void>;
   isAdmin: boolean;
+  mobile?: boolean;
 }
 
-function ProfileMenu({ displayName, avatarUrl, theme, isOpen, onToggle, onToggleTheme, onClose, onSignOut, isAdmin }: ProfileMenuProps) {
+function ProfileMenu({ displayName, avatarUrl, theme, isOpen, onToggle, onToggleTheme, onClose, onSignOut, isAdmin, mobile = false }: ProfileMenuProps) {
   const [isSignOutConfirmOpen, setIsSignOutConfirmOpen] = useState(false);
 
   async function confirmSignOut() {
@@ -179,7 +180,7 @@ function ProfileMenu({ displayName, avatarUrl, theme, isOpen, onToggle, onToggle
         <ChevronDown aria-hidden="true" className="h-3.5 w-3.5" />
       </button>
       {isOpen && (
-        <div className="absolute right-0 top-11 z-10 w-44 rounded-lg border border-slate-200 bg-white p-2 text-xs shadow-lg">
+        <div className={`${mobile ? 'mt-2 w-full' : 'absolute right-0 top-11 z-10 w-44'} rounded-lg border border-slate-200 bg-white p-2 text-xs shadow-lg`}>
           <a className="block rounded px-3 py-2 hover:bg-[#f4f1ff]" href="#configuracion" onClick={onClose}>Mi perfil</a>
           <a className="block rounded px-3 py-2 hover:bg-[#f4f1ff]" href="#mis-servicios" onClick={onClose}>Mis servicios</a>
           <a className="block rounded px-3 py-2 hover:bg-[#f4f1ff]" href="#favoritos" onClick={onClose}>Favoritos</a>

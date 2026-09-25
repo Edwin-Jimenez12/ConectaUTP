@@ -6,7 +6,32 @@ import { useAuth } from '../auth/useAuth';
 import { getPlanFeatureLabels, listPublicPlans, listPublicPromotions, type AdminPlan, type AdminPromotion } from '../lib/adminData';
 import { listOwnerServices } from '../lib/services';
 import type { DatabaseService } from '../types/service';
-import { boosts, plans } from './planes.data';
+import { plans } from './planes.data';
+
+const CHECKOUT_STORAGE_KEY = 'conecta-yappy-checkout';
+const CHECKOUT_SERVICE_STORAGE_KEY = 'conecta-yappy-checkout-service';
+
+function readStoredCheckout(): YappyCheckout | null {
+  try {
+    const value = sessionStorage.getItem(CHECKOUT_STORAGE_KEY);
+    if (!value) return null;
+    const checkout = JSON.parse(value) as Partial<YappyCheckout>;
+    if (checkout.type !== 'plan' && checkout.type !== 'promotion') return null;
+    if (typeof checkout.id !== 'string' || typeof checkout.name !== 'string' || typeof checkout.amount !== 'string') return null;
+    if (checkout.type === 'promotion' && typeof checkout.requiresService !== 'boolean') return null;
+    return checkout as YappyCheckout;
+  } catch {
+    return null;
+  }
+}
+
+function readStoredServiceId() {
+  try {
+    return sessionStorage.getItem(CHECKOUT_SERVICE_STORAGE_KEY) ?? '';
+  } catch {
+    return '';
+  }
+}
 
 function mapPlan(plan: AdminPlan, onSelect?: () => void) {
   return {
@@ -39,16 +64,42 @@ export function Planes() {
   const { session } = useAuth();
   const [remotePlans, setRemotePlans] = useState<AdminPlan[]>([]);
   const [remotePromotions, setRemotePromotions] = useState<AdminPromotion[]>([]);
+  const [promotionsLoading, setPromotionsLoading] = useState(true);
+  const [promotionsError, setPromotionsError] = useState(false);
   const [services, setServices] = useState<DatabaseService[]>([]);
-  const [checkout, setCheckout] = useState<YappyCheckout | null>(null);
-  const [selectedServiceId, setSelectedServiceId] = useState('');
+  const [checkout, setCheckout] = useState<YappyCheckout | null>(readStoredCheckout);
+  const [selectedServiceId, setSelectedServiceId] = useState(readStoredServiceId);
+
+  useEffect(() => {
+    try {
+      if (checkout) sessionStorage.setItem(CHECKOUT_STORAGE_KEY, JSON.stringify(checkout));
+      else sessionStorage.removeItem(CHECKOUT_STORAGE_KEY);
+    } catch {
+      // Some privacy modes block sessionStorage; the checkout still works in memory.
+    }
+  }, [checkout]);
+
+  useEffect(() => {
+    try {
+      if (checkout?.type === 'promotion' && checkout.requiresService && selectedServiceId) sessionStorage.setItem(CHECKOUT_SERVICE_STORAGE_KEY, selectedServiceId);
+      else sessionStorage.removeItem(CHECKOUT_SERVICE_STORAGE_KEY);
+    } catch {
+      // Some privacy modes block sessionStorage; the checkout still works in memory.
+    }
+  }, [checkout, selectedServiceId]);
 
   useEffect(() => {
     let isActive = true;
     void Promise.all([listPublicPlans(), listPublicPromotions()]).then(([plansResult, promotionsResult]) => {
       if (!isActive) return;
       if (!plansResult.error) setRemotePlans(plansResult.data);
-      if (!promotionsResult.error) setRemotePromotions(promotionsResult.data);
+      if (promotionsResult.error) setPromotionsError(true);
+      else setRemotePromotions(promotionsResult.data);
+      setPromotionsLoading(false);
+    }).catch(() => {
+      if (!isActive) return;
+      setPromotionsError(true);
+      setPromotionsLoading(false);
     });
     return () => {
       isActive = false;
@@ -62,8 +113,12 @@ export function Planes() {
     void listOwnerServices(session.user.id).then(({ data }) => setServices(data ?? []));
   }, [session]);
 
+  const closeCheckout = () => {
+    setCheckout(null);
+    setSelectedServiceId('');
+  };
   const visiblePlans = remotePlans.length > 0 ? remotePlans.map((plan) => mapPlan(plan, session ? () => setCheckout({ type: 'plan', id: plan.id, name: plan.name, amount: Number(plan.price).toFixed(2) }) : undefined)) : plans;
-  const visibleBoosts = remotePromotions.length > 0 ? remotePromotions.map(mapPromotion) : boosts;
+  const visibleBoosts = remotePromotions.map(mapPromotion);
 
   return (
     <>
@@ -110,29 +165,59 @@ export function Planes() {
             </p>
           </div>
 
-          <div className="mt-7 grid gap-4 md:grid-cols-3">
-            {visibleBoosts.map((boost) => (
-              <article
-                className="rounded-xl border border-slate-200 bg-white p-5"
-                key={boost.name}
-              >
-                <h3 className="font-semibold">{boost.name}</h3>
-                <p className="mt-2 text-sm text-[#676878]">
-                  {boost.benefit} durante {boost.duration}
-                </p>
-                <p className="mt-4 text-2xl font-bold text-[#5420a8]">
-                  {boost.price}
-                </p>
-                <p className="mt-1 text-xs text-[#676878]">
-                  por servicio seleccionado
-                </p>
-                {session && 'id' in boost && <Button className="mt-5 w-full" onClick={() => { setSelectedServiceId(''); setCheckout({ type: 'promotion', id: boost.id, name: boost.name, amount: boost.price.replace('B/.', ''), requiresService: boost.requiresService }); }}>Pagar con Yappy</Button>}
-              </article>
-            ))}
-          </div>
+          {promotionsLoading ? (
+            <p className="mt-7 text-sm text-[#676878]">Cargando promociones...</p>
+          ) : promotionsError ? (
+            <p className="mt-7 text-sm text-red-700" role="alert">
+              No se pudieron cargar las promociones. Intenta recargar la página.
+            </p>
+          ) : visibleBoosts.length === 0 ? (
+            <p className="mt-7 rounded-xl border border-slate-200 bg-white p-5 text-sm text-[#676878]">
+              No hay promociones disponibles por el momento.
+            </p>
+          ) : (
+            <div className="mt-7 grid gap-4 md:grid-cols-3">
+              {visibleBoosts.map((boost) => (
+                <article
+                  className="rounded-xl border border-slate-200 bg-white p-5"
+                  key={boost.id}
+                >
+                  <h3 className="font-semibold">{boost.name}</h3>
+                  <p className="mt-2 text-sm text-[#676878]">
+                    {boost.benefit} durante {boost.duration}
+                  </p>
+                  <p className="mt-4 text-2xl font-bold text-[#5420a8]">
+                    {boost.price}
+                  </p>
+                  <p className="mt-1 text-xs text-[#676878]">
+                    por servicio seleccionado
+                  </p>
+                  <Button
+                    className="mt-5 w-full"
+                    onClick={() => {
+                      if (!session) {
+                        window.location.hash = '#login';
+                        return;
+                      }
+                      setSelectedServiceId('');
+                      setCheckout({
+                        type: 'promotion',
+                        id: boost.id,
+                        name: boost.name,
+                        amount: boost.price.replace('B/.', ''),
+                        requiresService: boost.requiresService,
+                      });
+                    }}
+                  >
+                    Solicitar promoción
+                  </Button>
+                </article>
+              ))}
+            </div>
+          )}
         </div>
       </section>
-      {checkout && <YappyCheckoutDialog checkout={checkout} services={services} selectedServiceId={selectedServiceId} onServiceChange={setSelectedServiceId} onClose={() => setCheckout(null)} />}
+      {checkout && <YappyCheckoutDialog checkout={checkout} services={services} selectedServiceId={selectedServiceId} onServiceChange={setSelectedServiceId} onClose={closeCheckout} />}
 
       {!session && <section className="mx-auto grid w-[calc(100%-48px)] max-w-7xl gap-8 py-12">
         <aside className="rounded-2xl bg-linear-to-br from-[#5420a8] to-[#2671eb] p-7 text-white flex items-center justify-between max-md:flex-col max-md:items-start">

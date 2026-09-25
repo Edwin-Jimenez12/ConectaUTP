@@ -8,6 +8,7 @@ const EMPTY_FAVORITES = new Set<string>();
 function toCard(service: PublicService, canView: boolean, userId?: string): ServiceCardData {
   return {
     id: service.id,
+    providerId: service.owner_id,
     title: service.title,
     provider: service.provider_name,
     price: service.price === null ? 'Precio por definir' : `Desde B/.${service.price}`,
@@ -16,6 +17,7 @@ function toCard(service: PublicService, canView: boolean, userId?: string): Serv
     imageUrl: service.cover_image_url,
     imageAlt: service.cover_image_alt,
     providerImageUrl: service.provider_avatar_url,
+    galleryImages: service.gallery_images,
     locked: !canView,
     requestHref: service.owner_id !== userId && service.contact_clients_enabled !== false ? (canView ? `#chats/${service.id}` : '#login') : undefined,
   };
@@ -24,7 +26,7 @@ function toCard(service: PublicService, canView: boolean, userId?: string): Serv
 export function HorizontalServiceRow({ services, canView, userId, favoriteIds = EMPTY_FAVORITES, onToggleFavorite = () => undefined, featured = false }: { services: PublicService[]; canView: boolean; userId?: string; favoriteIds?: Set<string>; onToggleFavorite?: (serviceId: string) => void; featured?: boolean }) {
   const rowRef = useRef<HTMLDivElement>(null);
   const [canScroll, setCanScroll] = useState({ left: false, right: false });
-  const visibleServices = services.slice(0, 20);
+  const visibleServices = services;
 
   useEffect(() => {
     const element = rowRef.current;
@@ -53,7 +55,7 @@ export function HorizontalServiceRow({ services, canView, userId, favoriteIds = 
       <div className="flex gap-[13px] overflow-x-auto pb-3 pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" ref={rowRef}>
         {visibleServices.map((service) => (
           <div className={`${featured ? 'w-[310px]' : 'w-[250px]'} shrink-0 max-sm:w-[82vw]`} key={service.id}>
-            <ServiceCard service={toCard(service, canView, userId)} layout="grid" featured={Boolean(service.is_featured || service.is_interest_featured)} promoted={Boolean(service.is_promoted)} href={`#servicio/${service.id}`} isFavorite={favoriteIds.has(service.id)} onToggleFavorite={() => onToggleFavorite(service.id)} />
+            <ServiceCard service={toCard(service, canView, userId)} layout="grid" featured={Boolean(service.is_featured || service.is_interest_featured)} promoted={Boolean(service.is_promoted)} imageHref={`#servicio/${service.id}`} isFavorite={favoriteIds.has(service.id)} onToggleFavorite={() => onToggleFavorite(service.id)} />
           </div>
         ))}
       </div>
