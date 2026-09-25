@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, UserCircle2 } from 'lucide-react';
 import { useAuth } from '../auth/useAuth';
 import { Button } from '../components/Button';
 import { ServiceCard } from '../components/ServiceCard';
@@ -118,7 +118,18 @@ export function ServicioPublico({ serviceId }: { serviceId: string }) {
             </> : null}
             <span aria-live="polite" className="absolute right-3 top-3 rounded-full bg-black/70 px-2.5 py-1 text-xs font-medium text-white">{activeImageIndex + 1} / {signedImages.length}</span>
           </div> : <div className="flex h-64 items-center justify-center rounded-lg bg-linear-to-br from-[#eeeaff] to-[#d9d2eb] text-sm text-[#6040b5] sm:h-80">{session ? 'Este servicio no tiene imágenes.' : 'Regístrate para ver las imágenes.'}</div>}</div>
-          <div><span className="text-xs text-[#7b32ca]">{service.category_name}</span><h1 className="mt-2 text-2xl font-semibold">{service.title}</h1><p className="mt-2 text-sm text-[#676878]">Por {service.provider_name}</p><p className="mt-4 text-sm">{details?.description ?? 'Inicia sesión para consultar la descripción completa del servicio.'}</p><p className="mt-5 font-semibold text-[#7b32ca]">{service.price === null ? 'Precio por definir' : `Desde B/.${service.price}`}</p></div>
+          <div>
+            <span className="text-xs text-[#7b32ca]">{service.category_name}</span>
+            <h1 className="mt-2 text-2xl font-semibold">{service.title}</h1>
+            <a className="mt-3 inline-flex w-fit items-center gap-3 rounded-lg p-1 pr-3 transition-colors hover:bg-[#f0edff] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7b32ca]" href={`#perfil/${service.owner_id}`} aria-label={`Ver perfil de ${service.provider_name}`}>
+              {service.provider_avatar_url
+                ? <img className="h-11 w-11 rounded-full object-cover" src={service.provider_avatar_url} alt={`Foto de ${service.provider_name}`} />
+                : <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#eeeaff] text-[#7b32ca]"><UserCircle2 aria-hidden="true" className="h-7 w-7" /></span>}
+              <span className="text-sm text-[#676878]">Por <span className="font-medium text-[#5420a8]">{service.provider_name}</span></span>
+            </a>
+            <p className="mt-4 text-sm">{details?.description ?? 'Inicia sesión para consultar la descripción completa del servicio.'}</p>
+            <p className="mt-5 font-semibold text-[#7b32ca]">{service.price === null ? 'Precio por definir' : `Desde B/.${service.price}`}</p>
+          </div>
         </div>
         {session && !isOwner && service.contact_clients_enabled !== false ? <div className="border-t border-slate-100 p-5"><p className="text-sm text-[#676878]">¿Te interesa este servicio? Solicita información directamente al proveedor.</p><Button className="mt-3" onClick={() => { window.location.hash = `#chats/${service.id}`; }}>Solicitar servicio</Button></div> : !session ? <div className="border-t border-slate-100 p-5 text-sm text-[#676878]">Inicia sesión para solicitar este servicio.</div> : null}
       </article>
